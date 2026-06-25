@@ -1,11 +1,40 @@
-from fastapi import FastAPI
+import time
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from backend.app.core.config import settings
 from backend.app.db.session import engine, Base, SessionLocal
 from backend.app.db.models import User, MarketSignal, MarketOffer, MarketRequest
 from backend.app.api.v1.endpoints import auth, users, deals, recommendations, payments, integrations
 
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app, limit: int = 30, window: int = 10):
+        super().__init__(app)
+        self.limit = limit
+        self.window = window
+        self.ips = {}  # ip -> list of timestamps
+
+    async def dispatch(self, request: Request, call_next):
+        # Allow requests to API documentation or simple check
+        if request.url.path in ["/docs", "/redoc", "/openapi.json"]:
+            return await call_next(request)
+        
+        ip = request.client.host if request.client else "unknown"
+        now = time.time()
+        
+        timestamps = self.ips.get(ip, [])
+        timestamps = [t for t in timestamps if now - t < self.window]
+        
+        if len(timestamps) >= self.limit:
+            return Response(content="Too many requests. Please wait.", status_code=429)
+            
+        timestamps.append(now)
+        self.ips[ip] = timestamps
+        
+        return await call_next(request)
+
 app = FastAPI(title=settings.PROJECT_NAME)
+app.add_middleware(RateLimitMiddleware, limit=30, window=10)
 
 # CORS
 app.add_middleware(

@@ -343,6 +343,39 @@ from aiogram.client.default import DefaultBotProperties
 bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode="Markdown"))
 dp  = Dispatcher(storage=MemoryStorage())
 
+# --- Anti-Spam / Anti-Bot Rate Limiter Middleware ---
+from aiogram import BaseMiddleware
+from aiogram.types import TelegramObject
+
+class AntiSpamMiddleware(BaseMiddleware):
+    def __init__(self, limit: float = 1.0):
+        self.limit = limit
+        self.last_msg = {}
+        super().__init__()
+
+    async def __call__(self, handler, event: TelegramObject, data: dict):
+        if isinstance(event, Message):
+            user_id = event.from_user.id
+            now = datetime.now()
+            if user_id in self.last_msg:
+                elapsed = (now - self.last_msg[user_id]).total_seconds()
+                if elapsed < self.limit:
+                    return  # Silent drop of bot/user spam
+            self.last_msg[user_id] = now
+        elif isinstance(event, CallbackQuery):
+            user_id = event.from_user.id
+            now = datetime.now()
+            if user_id in self.last_msg:
+                elapsed = (now - self.last_msg[user_id]).total_seconds()
+                if elapsed < 0.5:
+                    await event.answer("⏳ Слишком быстро! Пожалуйста, подождите.")
+                    return
+            self.last_msg[user_id] = now
+        return await handler(event, data)
+
+dp.message.outer_middleware(AntiSpamMiddleware(limit=1.0))
+dp.callback_query.outer_middleware(AntiSpamMiddleware(limit=0.5))
+
 # ─── FSM States ────────────────────────────────────────────────────────────────
 class Reg(StatesGroup):
     role          = State()
