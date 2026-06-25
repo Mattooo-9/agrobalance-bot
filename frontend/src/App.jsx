@@ -188,7 +188,7 @@ function App() {
       const res = await fetch(`${API_BASE}/users/me`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
-      if (res.status_code === 401) {
+      if (res.status === 401) {
         handleLogout();
         return;
       }
@@ -378,7 +378,7 @@ function App() {
         updatedDeal.payment_status = 'released';
         updatedDeal.commission_status = 'collected';
         newEvent.action = 'completed';
-        newEvent.comment = 'Сделка завершена. Удержана комиссия 3%. Средства выплачены продавцу.';
+        newEvent.comment = 'Сделка завершена. Удержана комиссия 1%. Средства выплачены продавцу.';
         
         // Update user rating
         setUser(prev => ({ ...prev, trust_index: Math.min(100.0, prev.trust_index + 5.0) }));
@@ -1044,8 +1044,8 @@ function App() {
                     <span>{activeDealData.deal.total_price.toLocaleString()} руб.</span>
                   </div>
                   <div className="calc-row">
-                    <span>Комиссия сервиса (3%):</span>
-                    <span>{(activeDealData.deal.total_price * 0.03).toLocaleString()} руб.</span>
+                    <span>Комиссия сервиса (1%):</span>
+                    <span>{(activeDealData.deal.total_price * 0.01).toLocaleString()} руб.</span>
                   </div>
                   <div className="calc-row total">
                     <span>Итого к оплате (Escrow):</span>
@@ -1061,7 +1061,7 @@ function App() {
                   { key: 'accepted', title: 'Принята', desc: 'Сделка подтверждена, ожидается оплата' },
                   { key: 'paid_to_escrow', title: 'Оплачена (Escrow)', desc: 'Средства заблокированы, доставка разрешена' },
                   { key: 'delivered', title: 'Доставлена', desc: 'Перевозчик доставил урожай на склад/весы' },
-                  { key: 'completed', title: 'Завершена', desc: 'Средства выплачены продавцу, 3% удержано' }
+                  { key: 'completed', title: 'Завершена', desc: 'Средства выплачены продавцу, 1% удержано' }
                 ].map((s, idx) => {
                   let stepClass = '';
                   if (activeDealData.deal.status === s.key) {

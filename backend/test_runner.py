@@ -158,7 +158,7 @@ def run_tests():
         complete_deal(db, deal.id, buyer.id)
         assert deal.status == "completed", "Status should transition to completed"
         assert deal.payment_status == "released", "Payment should be released to seller"
-        assert deal.commission_status == "collected", "3% commission should be collected"
+        assert deal.commission_status == "collected", "1% commission should be collected"
         
         print("✅ Deal state machine and escrow payment completed successfully.")
         print("🎉 All AgroBalance engine tests PASSED successfully!")
