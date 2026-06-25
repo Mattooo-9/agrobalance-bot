@@ -1,11 +1,37 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
+from typing import Optional
 from backend.app.db.session import get_db
 from backend.app.db.models import User, TrustEvent, AntiFraudLog
 from backend.app.api.deps import get_current_user
 from backend.app.services.trust_engine import update_trust_index
 
 router = APIRouter()
+
+class RoleVerificationDetails(BaseModel):
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    area: Optional[float] = None
+    crop: Optional[str] = None
+    expected_yield: Optional[float] = None
+    photo_url: Optional[str] = None
+    
+    needed_crops: Optional[str] = None
+    desired_volume: Optional[float] = None
+    price_range: Optional[str] = None
+    payment_terms: Optional[str] = None
+    delivery_terms: Optional[str] = None
+    
+    vehicle_type: Optional[str] = None
+    capacity: Optional[float] = None
+    tariff_per_km: Optional[float] = None
+    routes: Optional[str] = None
+    
+    capacity_tons: Optional[float] = None
+    storage_conditions: Optional[str] = None
+    storage_price: Optional[float] = None
+
 
 @router.get("/me")
 def read_current_user(current_user: User = Depends(get_current_user)):
@@ -68,6 +94,25 @@ def verify_field_data(
     db.commit()
     
     return {"status": "success", "trust_index": current_user.trust_index, "verification": "verified"}
+
+@router.post("/verify-role-details")
+def verify_role_details(
+    details: RoleVerificationDetails,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    for field, val in details.dict(exclude_unset=True).items():
+        if val is not None:
+            setattr(current_user, field, val)
+            
+    update_trust_index(db, current_user.id, "verified_geo")
+    update_trust_index(db, current_user.id, "actual_photo")
+    update_trust_index(db, current_user.id, "photo_region_match")
+    
+    current_user.verification_status = "verified"
+    db.commit()
+    db.refresh(current_user)
+    return read_current_user(current_user)
 
 @router.get("/admin/antifraud-logs")
 def get_all_antifraud_logs(
