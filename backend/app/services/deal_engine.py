@@ -207,18 +207,19 @@ def cancel_deal(db: Session, deal_id: int, user_id: int, reason: str = "") -> De
     if not deal:
         raise ValueError("Сделка не найдена")
 
-    # If deal is already paid, cancellation requires admin or triggers trust drop
-    is_paid = deal.status in ["paid_to_escrow", "in_delivery", "delivered"]
-    
+    # Capture status BEFORE changing it
+    original_status = deal.status
+    is_paid = original_status in ["paid_to_escrow", "in_delivery", "delivered"]
+
     deal.status = "cancelled"
     deal.payment_status = "refunded" if is_paid else "pending"
     db.commit()
 
     log_deal_event(db, deal.id, user_id, "cancelled", f"Сделка отменена. Причина: {reason}")
-    
-    # Penalize if cancelled after agreement
-    if is_paid or deal.status == "accepted":
-        update_trust_index(db, user_id, "broken_deal", f"Отмена сделки после принятия")
+
+    # Penalize trust if cancelled after being accepted or paid
+    if is_paid or original_status == "accepted":
+        update_trust_index(db, user_id, "broken_deal", "Отмена сделки после принятия")
 
     return deal
 

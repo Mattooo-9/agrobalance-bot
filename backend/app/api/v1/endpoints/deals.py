@@ -65,21 +65,45 @@ def api_create_deal(deal_in: DealCreate, current_user: User = Depends(get_curren
 @router.get("/my")
 def get_my_deals(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     deals = db.query(Deal).filter(
-        (Deal.seller_id == current_user.id) | 
-        (Deal.buyer_id == current_user.id) | 
-        (Deal.carrier_id == current_user.id) | 
+        (Deal.seller_id == current_user.id) |
+        (Deal.buyer_id == current_user.id) |
+        (Deal.carrier_id == current_user.id) |
         (Deal.warehouse_id == current_user.id)
     ).all()
     return deals
 
+@router.get("/matches")
+def get_deal_matches(crop: Optional[str] = None, region: Optional[str] = None, db: Session = Depends(get_db)):
+    return match_offers_and_requests(db, crop, region)
+
+# Market Offer / Request listing (no auth required to browse)
+@router.get("/offers")
+def get_offers(crop: Optional[str] = None, region: Optional[str] = None, db: Session = Depends(get_db)):
+    q = db.query(MarketOffer).filter(MarketOffer.is_active == True)
+    if crop:
+        q = q.filter(MarketOffer.crop == crop)
+    if region:
+        q = q.filter(MarketOffer.region == region)
+    return q.all()
+
+@router.get("/requests")
+def get_requests(crop: Optional[str] = None, region: Optional[str] = None, db: Session = Depends(get_db)):
+    q = db.query(MarketRequest).filter(MarketRequest.is_active == True)
+    if crop:
+        q = q.filter(MarketRequest.crop == crop)
+    if region:
+        q = q.filter(MarketRequest.region == region)
+    return q.all()
+
+# ── Wildcard /{id} MUST come after all static routes ──────────────────────────────────
 @router.get("/{id}")
 def get_deal_by_id(id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     deal = db.query(Deal).filter(Deal.id == id).first()
     if not deal:
         raise HTTPException(status_code=404, detail="Сделка не найдена")
-    if current_user.id not in [deal.seller_id, deal.buyer_id, deal.carrier_id, deal.warehouse_id, 1]:  # 1 for system/admin
+    if current_user.id not in [deal.seller_id, deal.buyer_id, deal.carrier_id, deal.warehouse_id, 1]:
         raise HTTPException(status_code=403, detail="Доступ запрещен")
-    
+
     events = db.query(DealEvent).filter(DealEvent.deal_id == deal.id).order_by(DealEvent.created_at.asc()).all()
     return {
         "deal": deal,
@@ -140,8 +164,7 @@ def analyze_deal_chat(id: int, msg: MessageInChat, current_user: User = Depends(
     Checks if message contains direct contacts and triggers AntiFraud core.
     """
     is_bypass = check_chat_bypass_attempt(db, current_user.id, msg.text)
-    
-    # Store event in chat history/deal logs
+
     event = DealEvent(
         deal_id=id,
         user_id=current_user.id,
@@ -153,11 +176,7 @@ def analyze_deal_chat(id: int, msg: MessageInChat, current_user: User = Depends(
 
     return {"is_bypass_attempt": is_bypass, "trust_index": current_user.trust_index}
 
-@router.get("/matches")
-def get_deal_matches(crop: Optional[str] = None, region: Optional[str] = None, db: Session = Depends(get_db)):
-    return match_offers_and_requests(db, crop, region)
-
-# Market Offers / Requests endpoints
+# Market Offer / Request creation (auth required)
 @router.post("/offers")
 def create_offer(offer_in: OfferCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     offer = MarketOffer(
@@ -173,15 +192,6 @@ def create_offer(offer_in: OfferCreate, current_user: User = Depends(get_current
     db.refresh(offer)
     return offer
 
-@router.get("/offers")
-def get_offers(crop: Optional[str] = None, region: Optional[str] = None, db: Session = Depends(get_db)):
-    q = db.query(MarketOffer).filter(MarketOffer.is_active == True)
-    if crop:
-        q = q.filter(MarketOffer.crop == crop)
-    if region:
-        q = q.filter(MarketOffer.region == region)
-    return q.all()
-
 @router.post("/requests")
 def create_request(req_in: RequestCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     req = MarketRequest(
@@ -196,12 +206,3 @@ def create_request(req_in: RequestCreate, current_user: User = Depends(get_curre
     db.commit()
     db.refresh(req)
     return req
-
-@router.get("/requests")
-def get_requests(crop: Optional[str] = None, region: Optional[str] = None, db: Session = Depends(get_db)):
-    q = db.query(MarketRequest).filter(MarketRequest.is_active == True)
-    if crop:
-        q = q.filter(MarketRequest.crop == crop)
-    if region:
-        q = q.filter(MarketRequest.region == region)
-    return q.all()
