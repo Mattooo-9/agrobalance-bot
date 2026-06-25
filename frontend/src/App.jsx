@@ -19,23 +19,23 @@ const TRANSLATIONS = {
     ai_advice: "AI Советы",
     select_lang: "Выберите язык / Select Language",
     select_lang_desc: "Выберите язык интерфейса для продолжения / Select language to continue",
-    step1_role: "Шаг 1: Выберите вашу роль",
-    step2_contacts: "Шаг 2: Контактные данные",
-    org_name: "Имя или Название организации",
-    phone_num: "Номер телефона",
-    region: "Ваш регион деятельности",
+    step1_role: "Шаг 1: Роль на рынке",
+    step2_contacts: "Шаг 2: Контакты",
+    org_name: "Организация / Имя",
+    phone_num: "Телефон",
+    region: "Регион деятельности",
     next: "Далее",
     back: "Назад",
     register: "Зарегистрироваться",
-    rank_title: "Ваш игровой ранг AgroBalance",
+    rank_title: "Репутация AgroBalance",
     rank_ti: "TI",
-    rank_bonus: "⚡ Бонус ранга:",
-    lvl2_title: "⭐ Уровень 2: Расширенная верификация",
-    lvl2_desc: "Заполните дополнительные сведения о своей деятельности, чтобы получить ранг надежного партнера (+30 TI) и разблокировать создание сделок.",
+    rank_bonus: "⚡ Привилегии:",
+    lvl2_title: "⭐ Верификация деятельности",
+    lvl2_desc: "Заполните сведения, чтобы разблокировать создание сделок и повысить рейтинг (+30 TI).",
     farm_area: "Площадь хозяйства (га)",
     primary_crop: "Основная культура",
     expected_yield: "Ожидаемый урожай (тонн)",
-    field_photo_url: "Ссылка на фото поля",
+    field_photo_url: "Фото поля (ссылка)",
     gps_lat: "Широта GPS",
     gps_lng: "Долгота GPS",
     needed_crops: "Закупаемые культуры",
@@ -46,79 +46,79 @@ const TRANSLATIONS = {
     tariff_km: "Тариф (руб / км)",
     wh_capacity: "Емкость элеватора (тонн)",
     wh_storage_price: "Цена хранения (руб/тонна в месяц)",
-    btn_verify: "Подтвердить и получить ранг",
+    btn_verify: "Подтвердить данные",
     card_title: "Карточка",
     card_name: "Имя:",
     card_phone: "Телефон:",
     card_region: "Регион:",
     card_area: "Площадь:",
     card_crop: "Культура:",
-    card_expected: "Ожидаемый урожай:",
+    card_expected: "Урожай:",
     card_purchases: "Закупки:",
     card_terms: "Условия:",
-    deals_title: "Ваши сделки",
-    no_deals: "Активных сделок пока нет. Перейдите во вкладку \"Рынок\" для поиска.",
-    sale_offers: "Предложения о продаже (Фермеры)",
-    purchase_requests: "Запросы на покупку (Покупатели)",
+    deals_title: "Сделки",
+    no_deals: "Сделок нет",
+    sale_offers: "Продажа (Фермеры)",
+    purchase_requests: "Покупка (Покупатели)",
     propose_deal: "Предложить сделку",
-    deal_locked: "🔒 Требуется Уровень 2 верификации в Профиле.",
-    ai_title: "AI Рекомендации AgroBalance",
-    ai_desc: "Наш AI-алгоритм проанализизирован ваши данные поля, ожидаемый урожай пшеницы и текущую конъюнктуру рынка.",
-    ai_update: "Обновить рекомендации AI",
-    ai_locked: "🔒 AI-советы заблокированы. Пройдите Уровень 2 верификации (введите параметры поля на вкладке Профиль).",
+    deal_locked: "🔒 Требуется верификация в Профиле.",
+    ai_title: "AI Аналитика спроса и цен",
+    ai_desc: "AI-анализ спроса, цен и погодных рисков в вашем регионе.",
+    ai_update: "Обновить данные AI",
+    ai_locked: "🔒 Требуется верификация в Профиле.",
     risk_level: "Уровень риска",
     sell_timeline: "Сроки реализации",
-    why_profitable: "Почему это выгодно:",
-    what_wrong: "Что может пойти не так:",
-    what_next: "Что делать дальше:",
-    matching_buyers: "🎯 Подходящие покупатели в регионе:",
-    trust_index_label: "Индекс доверия:",
-    deal_back: "← Назад к профилю",
+    why_profitable: "Преимущества:",
+    what_wrong: "Риски:",
+    what_next: "Шаги к сделке:",
+    matching_buyers: "🎯 Рекомендуемые контрагенты:",
+    trust_index_label: "Доверие (TI):",
+    deal_back: "← Назад",
     deal_details: "Детали сделки",
     deal_crop: "Культура:",
     deal_volume: "Объем:",
     deal_price: "Цена за тонну:",
-    deal_total: "Итоговая сумма:",
-    deal_status: "Текущий статус сделки:",
-    escrow_title: "🛡️ Безопасная сделка AgroBalance",
-    escrow_total_product: "Сумма товара:",
-    escrow_fee: "Комиссия сервиса (1%):",
-    escrow_total_pay: "Итого к оплате (Escrow):",
-    btn_accept: "Принять сделку",
+    deal_total: "Итого:",
+    deal_status: "Статус:",
+    escrow_title: "🛡️ Escrow-счет (Безопасная сделка)",
+    escrow_total_product: "Товар:",
+    escrow_fee: "Сервисный сбор (1%):",
+    escrow_total_pay: "К блокировке в Escrow:",
+    btn_accept: "Принять условия",
     btn_pay_method: "💳 Выберите способ оплаты:",
     btn_card: "Карта 💳",
     btn_stars: "Stars ⭐",
     btn_ton: "TON 💎",
-    btn_confirm_pay: "Подтвердить оплату",
-    btn_confirm_delivery: "Подтвердить доставку (Разгрузка завершена)",
-    btn_confirm_recv: "Подтвердить приемку (Разблокировать выплату)",
+    btn_confirm_pay: "Оплатить",
+    btn_confirm_delivery: "Доставка завершена",
+    btn_confirm_recv: "Приемка подтверждена",
     btn_dispute: "Открыть спор (Арбитраж)",
     btn_cancel: "Отменить сделку",
-    chat_title: "Чат сделки (Защита от обхода комиссии)",
-    chat_placeholder: "Напишите сообщение...",
+    chat_title: "Чат (Защита от обхода Escrow)",
+    chat_placeholder: "Сообщение...",
     chat_send: "Отправить",
-    alert_verification_success: "Расширенная верификация успешно пройдена! Ваш ранг повышен.",
-    alert_wallet_connect_first: "Пожалуйста, сначала подключите TON-кошелек с помощью кнопки Wallet ⚡ в правом верхнем углу!",
-    alert_tx_confirmed: "🚀 Транзакция подтверждена! Средства заблокированы в смарт-контракте TON.",
-    alert_bypass_warning: "Внимание! Обнаружена попытка отправки контактов в обход комиссии. Ваш Trust Index снижен!",
+    alert_verification_success: "Данные верифицированы! Ваш статус повышен.",
+    alert_wallet_connect_first: "Подключите TON-кошелек кнопкой Wallet ⚡ вверху экрана!",
+    alert_tx_confirmed: "🚀 Транзакция подтверждена! Средства заблокированы в TON.",
+    alert_bypass_warning: "Внимание! Обнаружена попытка отправки контактов в обход комиссии. Рейтинг снижен!",
     roles: {
       Farmer: "Фермер",
       Buyer: "Покупатель",
       Carrier: "Перевозчик",
-      Warehouse: "Элеватор / Склад",
+      Warehouse: "Склад / Элеватор",
       Processor: "Переработчик",
       Supplier: "Поставщик",
       Agronomist: "Агроэксперт",
       Admin: "Администратор"
     },
     role_descriptions: {
-      Farmer: "Производство и продажа урожая",
-      Buyer: "Закупки зерна и культур",
-      Carrier: "Доставка урожая зерновозами",
+      Farmer: "Продажа урожая",
+      Buyer: "Закупка зерновых и культур",
+      Carrier: "Перевозка зерновозами",
       Warehouse: "Хранение продукции",
       Processor: "Переработка сырья",
       Supplier: "Удобрения, техника, семена",
-      Agronomist: "Консалтинг и аудит полей",
+      Agronomist: "Консалтинг и аудит",
     },
     regions: {
       "Южный": "Южный округ",
@@ -127,22 +127,22 @@ const TRANSLATIONS = {
       "Сибирь": "Сибирский округ"
     },
     tiers: {
-      gold: { name: "🏆 Золотой Агро-Лидер", desc: "Комиссия 1%. Скидка 10% на элеваторах, повышенный приоритет сделок." },
-      silver: { name: "🥈 Серебряный Партнер", desc: "Увеличенный лимит сделок, приоритет в подборе перевозчиков." },
-      bronze: { name: "🥉 Бронзовый Участник", desc: "Базовый доступ к рынку и ИИ-аналитике." },
-      novice: { name: "⚠️ Новичок (Под наблюдением)", desc: "Пониженный рейтинг. Подтвердите геолокацию поля для разблокировки." }
+      gold: { name: "🏆 Золотой Партнер", desc: "Комиссия 1% • Скидка 10% на складах • Макс. приоритет" },
+      silver: { name: "🥈 Серебряный Партнер", desc: "Повышенные лимиты • Приоритетный подбор транспорта" },
+      bronze: { name: "🥉 Бронзовый Участник", desc: "Стандартный доступ к рынку и аналитике" },
+      novice: { name: "⚠️ Новичок", desc: "Лимитированный доступ. Требуется верификация" }
     },
     statuses: {
       proposed: "Предложена",
-      accepted: "Принята",
+      accepted: "Согласована",
       paid_to_escrow: "Оплачена (Escrow)",
       delivered: "Доставлена",
       completed: "Завершена",
-      disputed: "В арбитраже",
+      disputed: "Спор",
       cancelled: "Отменена"
     },
     unit_ha: "га",
-    unit_tons: "тонн",
+    unit_tons: "т",
     rubles: "руб.",
     payment_method_val: {
       ton: "TON Crypto",
@@ -159,19 +159,19 @@ const TRANSLATIONS = {
     ai_advice: "AI Advice",
     select_lang: "Select Language / Выберите язык",
     select_lang_desc: "Select language to continue / Выберите язык интерфейса для продолжения",
-    step1_role: "Step 1: Choose your role",
-    step2_contacts: "Step 2: Contact details",
-    org_name: "Name or Organization name",
-    phone_num: "Phone number",
-    region: "Your active region",
+    step1_role: "Step 1: Market Role",
+    step2_contacts: "Step 2: Contacts",
+    org_name: "Organization / Name",
+    phone_num: "Phone",
+    region: "Region of activity",
     next: "Next",
     back: "Back",
     register: "Register",
-    rank_title: "Your AgroBalance rank",
+    rank_title: "AgroBalance Reputation",
     rank_ti: "TI",
-    rank_bonus: "⚡ Rank bonus:",
-    lvl2_title: "⭐ Level 2: Advanced Verification",
-    lvl2_desc: "Provide additional details about your activity to get a trusted partner rank (+30 TI) and unlock deal creation.",
+    rank_bonus: "⚡ Privileges:",
+    lvl2_title: "⭐ Activity Verification",
+    lvl2_desc: "Fill in activity details to unlock deal creation and gain +30 TI.",
     farm_area: "Farm area (ha)",
     primary_crop: "Primary crop",
     expected_yield: "Expected yield (tons)",
@@ -186,61 +186,61 @@ const TRANSLATIONS = {
     tariff_km: "Tariff (RUB / km)",
     wh_capacity: "Warehouse capacity (tons)",
     wh_storage_price: "Storage fee (RUB/ton per month)",
-    btn_verify: "Verify & upgrade rank",
+    btn_verify: "Submit Details",
     card_title: "Card",
     card_name: "Name:",
     card_phone: "Phone:",
     card_region: "Region:",
     card_area: "Area:",
     card_crop: "Crop:",
-    card_expected: "Expected yield:",
+    card_expected: "Yield:",
     card_purchases: "Purchases:",
     card_terms: "Terms:",
-    deals_title: "Your deals",
-    no_deals: "No active deals yet. Go to 'Market' tab to search.",
+    deals_title: "Deals",
+    no_deals: "No deals",
     sale_offers: "Sale Offers (Farmers)",
     purchase_requests: "Purchase Requests (Buyers)",
     propose_deal: "Propose Deal",
-    deal_locked: "🔒 Level 2 Verification in Profile required.",
-    ai_title: "AgroBalance AI Recommendations",
-    ai_desc: "Our AI algorithm has analyzed your field data, expected yield, and current market conditions.",
-    ai_update: "Update AI Advice",
-    ai_locked: "🔒 AI recommendations locked. Please complete Level 2 verification (enter field parameters in Profile).",
+    deal_locked: "🔒 Profile verification required.",
+    ai_title: "AI Demand & Price Analytics",
+    ai_desc: "AI analysis of local demand, prices, and weather risks.",
+    ai_update: "Update AI Data",
+    ai_locked: "🔒 Profile verification required.",
     risk_level: "Risk level",
     sell_timeline: "Sales timeline",
-    why_profitable: "Why profitable:",
-    what_wrong: "What could go wrong:",
-    what_next: "What to do next:",
-    matching_buyers: "🎯 Matching buyers in region:",
-    trust_index_label: "Trust index:",
-    deal_back: "← Back to Profile",
+    why_profitable: "Benefits:",
+    what_wrong: "Risks:",
+    what_next: "Next steps:",
+    matching_buyers: "🎯 Recommended Counterparties:",
+    trust_index_label: "Trust Index (TI):",
+    deal_back: "← Back",
     deal_details: "Deal Details",
     deal_crop: "Crop:",
     deal_volume: "Volume:",
     deal_price: "Price per ton:",
-    deal_total: "Total sum:",
-    deal_status: "Current status:",
-    escrow_title: "🛡️ AgroBalance Secure Escrow",
-    escrow_total_product: "Product amount:",
-    escrow_fee: "Service fee (1%):",
-    escrow_total_pay: "Total payment (Escrow):",
-    btn_accept: "Accept Deal",
+    deal_total: "Total:",
+    deal_status: "Status:",
+    escrow_title: "🛡️ Escrow Account (Secure Deal)",
+    escrow_total_product: "Goods:",
+    escrow_fee: "Service Fee (1%):",
+    escrow_total_pay: "To Lock in Escrow:",
+    btn_accept: "Accept Conditions",
     btn_pay_method: "💳 Choose payment method:",
     btn_card: "Card 💳",
     btn_stars: "Stars ⭐",
     btn_ton: "TON 💎",
-    btn_confirm_pay: "Confirm Payment",
-    btn_confirm_delivery: "Confirm Delivery (Unloading finished)",
-    btn_confirm_recv: "Confirm Receipt (Unlock payout)",
+    btn_confirm_pay: "Pay",
+    btn_confirm_delivery: "Delivery Completed",
+    btn_confirm_recv: "Receipt Confirmed",
     btn_dispute: "Open dispute (Arbitration)",
     btn_cancel: "Cancel Deal",
-    chat_title: "Deal Chat (Commission bypass protection)",
-    chat_placeholder: "Type a message...",
+    chat_title: "Chat (Escrow bypass protection)",
+    chat_placeholder: "Message...",
     chat_send: "Send",
-    alert_verification_success: "Advanced verification successful! Your rank has been upgraded.",
-    alert_wallet_connect_first: "Please connect your TON wallet first using the Wallet ⚡ button in the top right corner!",
-    alert_tx_confirmed: "🚀 Transaction confirmed! Funds are locked in the TON smart contract.",
-    alert_bypass_warning: "Warning! Attempt to share contact info outside the escrow. Your Trust Index was penalized!",
+    alert_verification_success: "Details verified! Your rank has been upgraded.",
+    alert_wallet_connect_first: "Connect TON wallet using the Wallet ⚡ button at the top!",
+    alert_tx_confirmed: "🚀 Transaction confirmed! Funds locked in TON.",
+    alert_bypass_warning: "Warning! Attempt to share contacts outside escrow. Rating penalized!",
     roles: {
       Farmer: "Farmer",
       Buyer: "Buyer",
@@ -252,13 +252,13 @@ const TRANSLATIONS = {
       Admin: "Administrator"
     },
     role_descriptions: {
-      Farmer: "Production and sales of crops",
-      Buyer: "Procurement of grains and crops",
-      Carrier: "Delivery of crop via grain trucks",
-      Warehouse: "Storage of agricultural products",
-      Processor: "Processing of raw materials",
-      Supplier: "Fertilizers, machinery, seeds",
-      Agronomist: "Consulting and field audits",
+      Farmer: "Selling harvest",
+      Buyer: "Purchasing crops",
+      Carrier: "Transporting crops",
+      Warehouse: "Storing crops",
+      Processor: "Processing crops",
+      Supplier: "Seeds & fertilizers",
+      Agronomist: "Consulting & audits",
     },
     regions: {
       "Южный": "Southern District",
@@ -267,22 +267,22 @@ const TRANSLATIONS = {
       "Сибирь": "Siberian District"
     },
     tiers: {
-      gold: { name: "🏆 Gold Agro-Leader", desc: "1% commission. 10% discount on warehouses, higher deal priority." },
-      silver: { name: "🥈 Silver Partner", desc: "Increased deal limit, carrier matchmaking priority." },
-      bronze: { name: "🥉 Bronze Member", desc: "Basic market access and AI analytics." },
-      novice: { name: "⚠️ Novice (Under observation)", desc: "Low rating. Verify field GPS in Profile to unlock." }
+      gold: { name: "🏆 Gold Partner", desc: "1% fee • 10% storage discount • Max priority" },
+      silver: { name: "🥈 Silver Partner", desc: "Increased limits • Transport matchmaking priority" },
+      bronze: { name: "🥉 Bronze Member", desc: "Standard market & analytics access" },
+      novice: { name: "⚠️ Novice", desc: "Limited access. Verification in Profile required" }
     },
     statuses: {
       proposed: "Proposed",
-      accepted: "Accepted",
-      paid_to_escrow: "Paid to Escrow",
+      accepted: "Agreed",
+      paid_to_escrow: "Paid (Escrow)",
       delivered: "Delivered",
       completed: "Completed",
-      disputed: "Disputed / Arbitration",
+      disputed: "Disputed",
       cancelled: "Cancelled"
     },
     unit_ha: "ha",
-    unit_tons: "tons",
+    unit_tons: "t",
     rubles: "RUB",
     payment_method_val: {
       ton: "TON Crypto",
@@ -514,6 +514,7 @@ function App() {
       setUser(data);
       setView('dashboard');
       fetchDeals();
+      fetchMarketData();
       if (data.role === 'Farmer') {
         fetchRecommendations();
       }
@@ -568,6 +569,25 @@ function App() {
     } catch(e) {}
   };
 
+  const fetchMarketData = async () => {
+    try {
+      const [offersRes, requestsRes] = await Promise.all([
+        fetch(`${API_BASE}/market/offers`, { headers: { "Authorization": `Bearer ${token}` } }),
+        fetch(`${API_BASE}/market/requests`, { headers: { "Authorization": `Bearer ${token}` } })
+      ]);
+      if (offersRes.ok) {
+        const data = await offersRes.json();
+        if (Array.isArray(data) && data.length > 0) setOffers(data);
+      }
+      if (requestsRes.ok) {
+        const data = await requestsRes.json();
+        if (Array.isArray(data) && data.length > 0) setRequests(data);
+      }
+    } catch(e) {
+      // Fallback mocks already loaded — no action needed
+    }
+  };
+
   const handleRegister = async (e) => {
     e.preventDefault();
     document.activeElement.blur();
@@ -616,7 +636,6 @@ function App() {
     setView('registration');
   };
 
-  // Generate recommendations triggered by farmer
   const handleGenerateRecommendations = async () => {
     setLoading(true);
     try {
@@ -829,7 +848,7 @@ function App() {
             <UserIcon size={18} />
             {TRANSLATIONS[language].profile}
           </button>
-          <button className={`nav-tab ${view === 'market' ? 'active' : ''}`} onClick={() => setView('market')}>
+          <button className={`nav-tab ${view === 'market' ? 'active' : ''}`} onClick={() => { setView('market'); fetchMarketData(); }}>
             <ShoppingCart size={18} />
             {TRANSLATIONS[language].market}
           </button>
@@ -907,7 +926,9 @@ function App() {
                       { key: 'Processor' },
                       { key: 'Supplier' },
                       { key: 'Agronomist' }
-                    ].map(r => (
+                    ]
+                    .sort((a, b) => TRANSLATIONS[language].roles[a.key].localeCompare(TRANSLATIONS[language].roles[b.key]))
+                    .map(r => (
                       <div 
                         key={r.key} 
                         className={`role-card ${regRole === r.key ? 'active' : ''}`}
@@ -952,10 +973,12 @@ function App() {
                       value={regForm.region} 
                       onChange={e => setRegForm({...regForm, region: e.target.value})}
                     >
-                      <option value="Южный">{TRANSLATIONS[language].regions["Южный"]}</option>
-                      <option value="Центральный">{TRANSLATIONS[language].regions["Центральный"]}</option>
-                      <option value="Поволжье">{TRANSLATIONS[language].regions["Поволжье"]}</option>
-                      <option value="Сибирь">{TRANSLATIONS[language].regions["Сибирь"]}</option>
+                      {["Южный", "Центральный", "Поволжье", "Сибирь"]
+                        .sort((a, b) => TRANSLATIONS[language].regions[a].localeCompare(TRANSLATIONS[language].regions[b]))
+                        .map(reg => (
+                          <option key={reg} value={reg}>{TRANSLATIONS[language].regions[reg]}</option>
+                        ))
+                      }
                     </select>
                   </div>
                   <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
@@ -972,10 +995,60 @@ function App() {
         {view === 'dashboard' && user && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             
-            {/* Trust Index Card */}
+            {/* Unified Business & Reputation Card */}
             <div className="glass-panel" style={{ background: 'linear-gradient(135deg, rgba(22, 33, 26, 0.9) 0%, rgba(15, 20, 17, 0.9) 100%)' }}>
-              <h3 className="panel-title"><Shield className="text-green" /> {TRANSLATIONS[language].rank_title}</h3>
-              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '14px', marginBottom: '14px' }}>
+                <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <UserIcon className="text-green" size={20} /> {user.name}
+                  </h3>
+                  <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    {TRANSLATIONS[language].roles[user.role]} • {TRANSLATIONS[language].regions[user.region] || user.region}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    {TRANSLATIONS[language].phone_num}
+                  </div>
+                  <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-white)' }}>
+                    {user.phone}
+                  </div>
+                </div>
+              </div>
+
+              {/* Role specific properties */}
+              {(user.role === 'Farmer' || user.role === 'Buyer' || user.role === 'Carrier' || user.role === 'Warehouse') && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 15px', fontSize: '13px', background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: '8px', marginBottom: '14px' }}>
+                  {user.role === 'Farmer' && (
+                    <>
+                      <div><span style={{ color: 'var(--text-muted)' }}>{TRANSLATIONS[language].card_crop}</span> <b style={{ float: 'right' }}>{user.crop || '—'}</b></div>
+                      <div><span style={{ color: 'var(--text-muted)' }}>{TRANSLATIONS[language].card_area}</span> <b style={{ float: 'right' }}>{user.area || 0} {TRANSLATIONS[language].unit_ha}</b></div>
+                      <div style={{ gridColumn: 'span 2' }}><span style={{ color: 'var(--text-muted)' }}>{TRANSLATIONS[language].card_expected}</span> <b style={{ float: 'right' }}>{user.expected_yield || 0} {TRANSLATIONS[language].unit_tons}</b></div>
+                    </>
+                  )}
+                  {user.role === 'Buyer' && (
+                    <>
+                      <div style={{ gridColumn: 'span 2' }}><span style={{ color: 'var(--text-muted)' }}>{TRANSLATIONS[language].card_purchases}</span> <b style={{ float: 'right' }}>{user.needed_crops || '—'}</b></div>
+                      <div style={{ gridColumn: 'span 2' }}><span style={{ color: 'var(--text-muted)' }}>{TRANSLATIONS[language].card_terms}</span> <b style={{ float: 'right' }}>{user.payment_terms || '—'}</b></div>
+                    </>
+                  )}
+                  {user.role === 'Carrier' && (
+                    <>
+                      <div><span style={{ color: 'var(--text-muted)' }}>{language === 'ru' ? 'Транспорт:' : 'Vehicle:'}</span> <b style={{ float: 'right' }}>{user.vehicle_type || '—'}</b></div>
+                      <div><span style={{ color: 'var(--text-muted)' }}>{language === 'ru' ? 'Грузоподъемность:' : 'Capacity:'}</span> <b style={{ float: 'right' }}>{user.capacity || 0} {TRANSLATIONS[language].unit_tons}</b></div>
+                      <div style={{ gridColumn: 'span 2' }}><span style={{ color: 'var(--text-muted)' }}>{language === 'ru' ? 'Тариф:' : 'Tariff:'}</span> <b style={{ float: 'right' }}>{user.tariff_per_km || 0} {TRANSLATIONS[language].rubles}/км</b></div>
+                    </>
+                  )}
+                  {user.role === 'Warehouse' && (
+                    <>
+                      <div><span style={{ color: 'var(--text-muted)' }}>{language === 'ru' ? 'Вместимость:' : 'Capacity:'}</span> <b style={{ float: 'right' }}>{user.capacity_tons || 0} {TRANSLATIONS[language].unit_tons}</b></div>
+                      <div><span style={{ color: 'var(--text-muted)' }}>{language === 'ru' ? 'Цена хранения:' : 'Storage Fee:'}</span> <b style={{ float: 'right' }}>{user.storage_price || 0} {TRANSLATIONS[language].rubles}/т</b></div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Reputation & Trust Index */}
               {(() => {
                 const getTier = (ti) => {
                   const tData = TRANSLATIONS[language].tiers;
@@ -987,28 +1060,30 @@ function App() {
                 const tier = getTier(user.trust_index);
 
                 return (
-                  <div className="tier-progress-container" style={{ margin: '15px 0' }}>
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px' }}>
-                      <span>{language === 'ru' ? 'Игровой Ранг:' : 'Game Rank:'} <b style={{ color: tier.color }}>{tier.name}</b></span>
+                      <span>
+                        <Shield size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle', color: tier.color }} />
+                        <b style={{ color: tier.color }}>{tier.name}</b>
+                      </span>
                       <span><b>{Math.round(user.trust_index)}</b> / 100 {TRANSLATIONS[language].rank_ti}</span>
                     </div>
-                    <div style={{ width: '100%', height: '10px', background: 'rgba(255,255,255,0.08)', borderRadius: '5px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
                       <div style={{ 
                         width: `${Math.max(5, Math.min(100, user.trust_index))}%`, 
                         height: '100%', 
                         background: `linear-gradient(90deg, var(--primary-green) 0%, ${tier.color} 100%)`, 
-                        borderRadius: '5px', 
-                        boxShadow: `0 0 8px ${tier.color}80`,
+                        borderRadius: '3px', 
+                        boxShadow: `0 0 6px ${tier.color}60`,
                         transition: 'width 0.6s ease-out' 
-                      }}></div>
+                       }}></div>
                     </div>
-                    <div style={{ fontSize: '13px', color: 'var(--text-white)', marginTop: '10px', opacity: 0.8 }}>
+                    <div style={{ fontSize: '12px', color: 'var(--text-white)', marginTop: '8px', opacity: 0.75 }}>
                       {TRANSLATIONS[language].rank_bonus} {tier.desc}
                     </div>
                   </div>
                 );
               })()}
-              
             </div>
 
             {/* Level 2: Advanced Verification */}
@@ -1164,41 +1239,22 @@ function App() {
               </div>
             )}
 
-            {/* Profile Overview */}
-            <div className="glass-panel">
-              <h3 className="panel-title"><UserIcon /> {TRANSLATIONS[language].card_title} {TRANSLATIONS[language].roles[user.role]}</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px' }}>
-                <div><b>{TRANSLATIONS[language].card_name}</b> {user.name}</div>
-                <div><b>{TRANSLATIONS[language].card_phone}</b> {user.phone}</div>
-                <div><b>{TRANSLATIONS[language].card_region}</b> {TRANSLATIONS[language].regions[user.region] || user.region}</div>
-                {user.role === 'Farmer' && (
-                  <>
-                    <div><b>{TRANSLATIONS[language].card_area}</b> {user.area} {TRANSLATIONS[language].unit_ha}</div>
-                    <div><b>{TRANSLATIONS[language].card_crop}</b> {user.crop}</div>
-                    <div><b>{TRANSLATIONS[language].card_expected}</b> {user.expected_yield} {TRANSLATIONS[language].unit_tons}</div>
-                  </>
-                )}
-                {user.role === 'Buyer' && (
-                  <>
-                    <div><b>{TRANSLATIONS[language].card_purchases}</b> {user.needed_crops}</div>
-                    <div><b>{TRANSLATIONS[language].card_terms}</b> {user.payment_terms}</div>
-                  </>
-                )}
-              </div>
-            </div>
+
 
             {/* Active Deals List */}
             <div className="glass-panel">
               <h3 className="panel-title"><Briefcase /> {TRANSLATIONS[language].deals_title}</h3>
               {myDeals.length === 0 ? (
-                <div style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{TRANSLATIONS[language].no_deals}</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '12px' }}>
+                  {TRANSLATIONS[language].no_deals}
+                </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {myDeals.map(d => (
                     <div key={d.id} className="match-card" onClick={() => loadDealDetail(d.id)} style={{ cursor: 'pointer' }}>
                       <div>
                         <div style={{ fontWeight: '600' }}>{d.crop} — {d.volume} {TRANSLATIONS[language].unit_tons}</div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{language === 'ru' ? 'Сумма:' : 'Sum:'} {d.total_price.toLocaleString()} {TRANSLATIONS[language].rubles}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{d.total_price.toLocaleString()} {TRANSLATIONS[language].rubles}</div>
                       </div>
                       <span className={`trust-index-badge ${d.status === 'completed' ? 'text-green' : 'text-gold'}`}>
                         {(TRANSLATIONS[language].statuses[d.status] || d.status).toUpperCase()}
@@ -1217,12 +1273,14 @@ function App() {
             <div className="glass-panel">
               <h3 className="panel-title"><ShoppingCart /> {TRANSLATIONS[language].sale_offers}</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {offers.map(o => (
+                {[...offers]
+                  .sort((a, b) => (a.crop || '').localeCompare(b.crop || ''))
+                  .map(o => (
                   <div key={o.id} className="match-card">
                     <div>
                       <div style={{ fontWeight: '600' }}>{o.crop} ({o.volume} {TRANSLATIONS[language].unit_tons})</div>
-                      <div style={{ fontSize: '13px' }}>{language === 'ru' ? 'Цена:' : 'Price:'} <b>{o.price_per_unit} {TRANSLATIONS[language].rubles}/{TRANSLATIONS[language].unit_tons.slice(0, 1)}</b></div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{language === 'ru' ? 'Продавец:' : 'Seller:'} {o.seller_name}</div>
+                      <div style={{ fontSize: '13px' }}><b>{o.price_per_unit} {TRANSLATIONS[language].rubles}/{TRANSLATIONS[language].unit_tons}</b></div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{o.seller_name}</div>
                     </div>
                     {user && user.role === 'Buyer' && (
                       user.verification_status === 'verified' ? (
@@ -1262,12 +1320,14 @@ function App() {
             <div className="glass-panel">
               <h3 className="panel-title"><ShoppingCart /> {TRANSLATIONS[language].purchase_requests}</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {requests.map(r => (
+                {[...requests]
+                  .sort((a, b) => (a.crop || '').localeCompare(b.crop || ''))
+                  .map(r => (
                   <div key={r.id} className="match-card">
                     <div>
                       <div style={{ fontWeight: '600' }}>{r.crop} ({r.volume} {TRANSLATIONS[language].unit_tons})</div>
-                      <div style={{ fontSize: '13px' }}>{language === 'ru' ? 'Предлагает:' : 'Offers:'} <b>{r.price_per_unit} {TRANSLATIONS[language].rubles}/{TRANSLATIONS[language].unit_tons.slice(0, 1)}</b></div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{language === 'ru' ? 'Покупатель:' : 'Buyer:'} {r.buyer_name}</div>
+                      <div style={{ fontSize: '13px' }}><b>{r.price_per_unit} {TRANSLATIONS[language].rubles}/{TRANSLATIONS[language].unit_tons}</b></div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{r.buyer_name}</div>
                     </div>
                     {user && user.role === 'Farmer' && (
                       user.verification_status === 'verified' ? (

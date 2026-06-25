@@ -1590,6 +1590,29 @@ async def start_web_server():
     await site.start()
     log.info(f"✅ Web server started on port {port}")
 
+async def init_bot_resilient():
+    global BOT_USERNAME
+    BOT_USERNAME = "AgroBalanceGlobalBot"
+    from aiogram.types import MenuButtonWebApp, WebAppInfo
+    
+    while True:
+        try:
+            me = await bot.get_me()
+            BOT_USERNAME = me.username
+            log.info(f"✅ Успешно подключено к Telegram! Бот: @{me.username} ({me.full_name})")
+            
+            await bot.set_chat_menu_button(
+                menu_button=MenuButtonWebApp(
+                    text="AgroBalance",
+                    web_app=WebAppInfo(url="https://Mattooo-9.github.io/agrobalance-bot/")
+                )
+            )
+            log.info("✅ Кнопка Telegram Mini App меню успешно настроена.")
+            break
+        except Exception as e:
+            log.error(f"⚠️ Сетевой сбой при подключении к Telegram: {e}. Повторная попытка через 15 секунд...")
+            await asyncio.sleep(15)
+
 # ─── Entry Point ──────────────────────────────────────────────────────────────
 async def main(start_http=True):
     if not BOT_TOKEN:
@@ -1600,31 +1623,45 @@ async def main(start_http=True):
     log.info(f"🌾 AgroBalance Bot starting... Admin ID: {ADMIN_ID}")
     log.info(f"🤖 Gemini AI: {'✅ Подключен' if GEMINI_KEY else '⚠️ Не настроен (локальный режим)'}")
 
-    try:
-        me = await bot.get_me()
-        log.info(f"✅ Bot: @{me.username} ({me.full_name})")
-        global BOT_USERNAME
-        BOT_USERNAME = me.username
-
-        # Set WebApp Menu Button globally
-        from aiogram.types import MenuButtonWebApp
-        await bot.set_chat_menu_button(
-            menu_button=MenuButtonWebApp(
-                text="AgroBalance",
-                web_app=WebAppInfo(url="https://Mattooo-9.github.io/agrobalance-bot/")
-            )
-        )
-        log.info("✅ Telegram Mini App Menu Button set to: https://Mattooo-9.github.io/agrobalance-bot/")
-    except Exception as e:
-        log.error(f"❌ Не удалось подключиться к Telegram или настроить кнопку WebApp: {e}")
-        sys.exit(1)
+    # Resilient initialization loop to withstand network failures or geoblocks
+    asyncio.create_task(init_bot_resilient())
 
     # Start web server to pass Render port checks
     if start_http:
         await start_web_server()
 
     log.info("✅ Бот запущен. Ожидаем сообщения...")
-    await dp.start_polling(bot, allowed_updates=["message","callback_query"])
+
+    # ── Resilient polling loop ─────────────────────────────────────────────────
+    # Retries automatically on any network error, Telegram outage, or geoblock.
+    # Backoff: starts at 5s, doubles each failure up to 60s max.
+    retry_delay = 5
+    max_delay = 60
+    while True:
+        try:
+            log.info("🔄 Запускаем polling Telegram...")
+            await dp.start_polling(
+                bot,
+                allowed_updates=["message", "callback_query"],
+                close_bot_session=False,   # keep session alive between restarts
+            )
+            # start_polling returned cleanly (graceful stop signal)
+            log.info("⏹️ Polling завершён штатно.")
+            break
+        except asyncio.CancelledError:
+            log.info("⏹️ Polling отменён — завершаем работу бота.")
+            break
+        except Exception as poll_err:
+            log.error(
+                f"⚠️ Polling упал: {poll_err}. "
+                f"Повторная попытка через {retry_delay}с..."
+            )
+            await asyncio.sleep(retry_delay)
+            retry_delay = min(retry_delay * 2, max_delay)
+        else:
+            # Reset backoff on successful run
+            retry_delay = 5
+
 
 if __name__ == "__main__":
     asyncio.run(main())
