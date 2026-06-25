@@ -5,7 +5,9 @@ import {
 } from 'lucide-react';
 import './App.css';
 
-const API_BASE = "http://127.0.0.1:8000/api/v1";
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? "http://127.0.0.1:8000/api/v1"
+  : "https://agrobalance-bot-service.onrender.com/api/v1";
 
 function App() {
   const [view, setView] = useState('registration'); // registration, dashboard, market, recommendations, deal-detail, admin
@@ -135,8 +137,47 @@ function App() {
     ]);
   };
 
+  const checkAutoLogin = async (tgId) => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: tgId })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setToken(data.access_token);
+        localStorage.setItem('token', data.access_token);
+      } else {
+        setView('registration');
+      }
+    } catch (e) {
+      console.log("Auto login check failed or offline:", e);
+    }
+  };
+
   useEffect(() => {
     loadMocks();
+
+    if (window.Telegram && window.Telegram.WebApp) {
+      const webapp = window.Telegram.WebApp;
+      webapp.ready();
+      webapp.expand();
+      
+      const tgUser = webapp.initDataUnsafe?.user;
+      if (tgUser) {
+        const tgIdStr = tgUser.id.toString();
+        setRegForm(prev => ({
+          ...prev,
+          name: tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : ''),
+          telegram_id: tgIdStr
+        }));
+        if (!token) {
+          checkAutoLogin(tgIdStr);
+        }
+      }
+    }
+
     if (token) {
       fetchProfile();
     }

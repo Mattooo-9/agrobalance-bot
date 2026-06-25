@@ -1572,8 +1572,18 @@ async def main():
         log.info(f"✅ Bot: @{me.username} ({me.full_name})")
         global BOT_USERNAME
         BOT_USERNAME = me.username
+
+        # Set WebApp Menu Button globally
+        from aiogram.types import MenuButtonWebApp
+        await bot.set_chat_menu_button(
+            menu_button=MenuButtonWebApp(
+                text="AgroBalance",
+                web_app=WebAppInfo(url="https://agrobalance-app.onrender.com")
+            )
+        )
+        log.info("✅ Telegram Mini App Menu Button set to: https://agrobalance-app.onrender.com")
     except Exception as e:
-        log.error(f"❌ Не удалось подключиться к Telegram: {e}")
+        log.error(f"❌ Не удалось подключиться к Telegram или настроить кнопку WebApp: {e}")
         sys.exit(1)
 
     # Start web server to pass Render port checks
