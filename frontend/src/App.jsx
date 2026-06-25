@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   User as UserIcon, Shield, TrendingUp, Briefcase, FileText, ShoppingCart, 
-  MapPin, Phone, Truck, HardDrive, HelpCircle, Loader, MessageSquare, AlertTriangle, check
+  MapPin, Phone, Truck, HardDrive, HelpCircle, Loader, MessageSquare, AlertTriangle, Check
 } from 'lucide-react';
 import './App.css';
 
