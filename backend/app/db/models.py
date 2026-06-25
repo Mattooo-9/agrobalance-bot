@@ -155,7 +155,7 @@ class EscrowPayment(Base):
     deal_id = Column(Integer, ForeignKey("deals.id"))
     payment_method = Column(String, nullable=False)  # card, ton, usdt, stars, bank
     amount = Column(Float, nullable=False)
-    platform_fee = Column(Float, nullable=False)  # 3%
+    platform_fee = Column(Float, nullable=False)  # 1% platform commission
     status = Column(String, default="pending")  # pending, locked, released, refunded
     tx_hash = Column(String, nullable=True)
     escrow_wallet = Column(String, nullable=True)
