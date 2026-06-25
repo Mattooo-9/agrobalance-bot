@@ -63,7 +63,7 @@ const TRANSLATIONS = {
     propose_deal: "Предложить сделку",
     deal_locked: "🔒 Требуется Уровень 2 верификации в Профиле.",
     ai_title: "AI Рекомендации AgroBalance",
-    ai_desc: "Наш AI-алгоритм проанализировал ваши данные поля, ожидаемый урожай пшеницы и текущую конъюнктуру рынка.",
+    ai_desc: "Наш AI-алгоритм проанализизирован ваши данные поля, ожидаемый урожай пшеницы и текущую конъюнктуру рынка.",
     ai_update: "Обновить рекомендации AI",
     ai_locked: "🔒 AI-советы заблокированы. Пройдите Уровень 2 верификации (введите параметры поля на вкладке Профиль).",
     risk_level: "Уровень риска",
@@ -297,6 +297,7 @@ function App() {
   const [language, setLanguage] = useState(localStorage.getItem('lang') || 'ru');
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
   
   // App States
   const [offers, setOffers] = useState([]);
@@ -451,6 +452,7 @@ function App() {
   };
 
   const checkAutoLogin = async (tgId) => {
+    setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
@@ -466,6 +468,8 @@ function App() {
       }
     } catch (e) {
       console.log("Auto login check failed or offline:", e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -497,6 +501,7 @@ function App() {
   }, [token]);
 
   const fetchProfile = async () => {
+    setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/users/me`, {
         headers: { "Authorization": `Bearer ${token}` }
@@ -528,6 +533,8 @@ function App() {
         expected_yield: 480
       });
       setView('dashboard');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -563,6 +570,8 @@ function App() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    document.activeElement.blur();
+    setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/auth/register`, {
         method: "POST",
@@ -595,6 +604,8 @@ function App() {
         expected_yield: regForm.expected_yield
       });
       setView('dashboard');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -602,11 +613,12 @@ function App() {
     localStorage.removeItem('token');
     setToken('');
     setUser(null);
-    setView('lang-select');
+    setView('registration');
   };
 
   // Generate recommendations triggered by farmer
   const handleGenerateRecommendations = async () => {
+    setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/recommendations/generate`, {
         method: "POST",
@@ -616,13 +628,15 @@ function App() {
       if (Array.isArray(data)) setRecommendations(data);
     } catch (e) {
       alert("AI-рекомендации сгенерированы по локальной формуле (Gemini API offline)");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const loadDealDetail = async (dealId) => {
+  const loadDealDetail = async (dealId, fallbackDeal = null) => {
     setActiveDealId(dealId);
     setView('deal-detail');
-    
+    setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/deals/${dealId}`, {
         headers: { "Authorization": `Bearer ${token}` }
@@ -630,17 +644,22 @@ function App() {
       const data = await res.json();
       setActiveDealData(data);
     } catch(e) {
-      const deal = myDeals.find(d => d.id === dealId);
-      setActiveDealData({
-        deal: deal,
-        events: [
-          { id: 1, action: "created", comment: "Сделка предложена", created_at: new Date().toISOString() }
-        ]
-      });
+      const deal = fallbackDeal || myDeals.find(d => d.id === dealId);
+      if (deal) {
+        setActiveDealData({
+          deal: deal,
+          events: [
+            { id: 1, action: "created", comment: language === 'ru' ? "Сделка предложена" : "Deal proposed", created_at: new Date().toISOString() }
+          ]
+        });
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   const executeDealAction = async (action, payload = {}) => {
+    setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/deals/${activeDealId}/${action}`, {
         method: "POST",
@@ -690,6 +709,8 @@ function App() {
       const updatedEvents = [...activeDealData.events, newEvent];
       setActiveDealData({ deal: updatedDeal, events: updatedEvents });
       setMyDeals(prev => prev.map(d => d.id === activeDealId ? updatedDeal : d));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -699,6 +720,7 @@ function App() {
 
     const msgText = chatMessage;
     setChatMessage('');
+    document.activeElement.blur(); // Hide keyboard!
 
     const userMsgEvent = {
       id: Date.now(),
@@ -750,6 +772,28 @@ function App() {
       }
     }
   };
+
+  if (loading) {
+    return (
+      <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-dark)' }}>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          .spinner-icon {
+            animation: spin 1s linear infinite;
+          }
+        `}</style>
+        <div style={{ textAlign: 'center' }}>
+          <Loader className="spinner-icon text-green" size={48} style={{ color: 'var(--primary-green)', margin: '0 auto 16px' }} />
+          <p style={{ color: 'var(--text-white)', fontSize: '14px', opacity: 0.8 }}>
+            {language === 'ru' ? 'Загрузка AgroBalance...' : 'Loading AgroBalance...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-container">
@@ -979,6 +1023,8 @@ function App() {
                 
                 <form onSubmit={async (e) => {
                   e.preventDefault();
+                  document.activeElement.blur();
+                  setLoading(true);
                   try {
                     const res = await fetch(`${API_BASE}/users/verify-role-details`, {
                       method: "POST",
@@ -1029,6 +1075,8 @@ function App() {
                       capacity_tons: regForm.capacity_tons,
                       storage_price: regForm.storage_price
                     }));
+                  } finally {
+                    setLoading(false);
                   }
                 }}>
                   {user.role === 'Farmer' && (
@@ -1194,7 +1242,7 @@ function App() {
                               delivery_type: "pickup"
                             };
                             setMyDeals([deal, ...myDeals]);
-                            loadDealDetail(deal.id);
+                            loadDealDetail(deal.id, deal);
                           }} 
                           className="btn btn-primary" style={{ width: 'auto', padding: '6px 12px', fontSize: '13px' }}
                         >
@@ -1239,7 +1287,7 @@ function App() {
                               delivery_type: "delivery"
                             };
                             setMyDeals([deal, ...myDeals]);
-                            loadDealDetail(deal.id);
+                            loadDealDetail(deal.id, deal);
                           }} 
                           className="btn btn-primary" style={{ width: 'auto', padding: '6px 12px', fontSize: '13px' }}
                         >
