@@ -1,0 +1,15 @@
+services:
+  - type: worker
+    name: agrobalance-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python3 bot/agrobot.py
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        value: PLACEHOLDER_TOKEN
+      - key: USER_TELEGRAM_ID
+        value: "8017348770"
+      - key: GEMINI_API_KEY
+        value: PLACEHOLDER_GEMINI
+      - key: PYTHON_VERSION
+        value: "3.11.0"

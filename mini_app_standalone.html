@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgroBalance Mini App</title>
+  <!-- Google Fonts & Lucide Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --bg-dark: #0f1411;
+      --panel-bg: rgba(22, 33, 26, 0.7);
+      --panel-border: rgba(0, 230, 118, 0.15);
+      --primary-green: #00e676;
+      --primary-hover: #00b050;
+      --accent-gold: #ffc107;
+      --accent-blue: #00b0ff;
+      --accent-red: #ff3d00;
+      --text-white: #f5f8f6;
+      --text-muted: #889c93;
+      --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      --glass-blur: blur(12px);
+      --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-dark);
+      color: var(--text-white);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(0, 230, 118, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(255, 193, 7, 0.03) 0%, transparent 45%);
+    }
+
+    .tma-wrapper {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100vh;
+      background: rgba(15, 20, 17, 0.5);
+      border-left: 1px solid rgba(255, 255, 255, 0.05);
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      background: rgba(15, 20, 17, 0.85);
+      backdrop-filter: var(--glass-blur);
+      border-bottom: 1px solid var(--panel-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-text {
+      font-size: 20px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary-green) 0%, var(--accent-gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .trust-badge {
+      background: rgba(0, 230, 118, 0.12);
+      border: 1px solid var(--primary-green);
+      color: var(--primary-green);
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(0, 230, 118, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .main-content {
+      padding: 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding-bottom: 80px; /* space for navbar */
+    }
+
+    /* Views */
+    .view-panel {
+      display: none;
+    }
+
+    .view-panel.active {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeIn 0.35s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .glass-card {
+      background: var(--panel-bg);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: var(--card-shadow);
+      transition: all 0.3s ease;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(0, 230, 118, 0.28);
+    }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-white);
+    }
+
+    /* Wizard / Form */
+    .step-indicator {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .step-dot {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: var(--text-muted);
+      transition: all 0.3s ease;
+    }
+
+    .step-dot.active {
+      background: var(--primary-green);
+      border-color: var(--primary-green);
+      color: var(--bg-dark);
+      box-shadow: 0 0 10px rgba(0,230,118,0.3);
+    }
+
+    .step-line {
+      flex: 1;
+      height: 2px;
+      background: rgba(255,255,255,0.1);
+      margin: 0 6px;
+    }
+
+    .step-line.active {
+      background: var(--primary-green);
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+
+    .form-input, select {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 11px;
+      color: var(--text-white);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      transition: all 0.3s ease;
+      outline: none;
+    }
+
+    .form-input:focus, select:focus {
+      border-color: var(--primary-green);
+      background: rgba(255, 255, 255, 0.07);
+      box-shadow: 0 0 8px rgba(0, 230, 118, 0.15);
+    }
+
+    .role-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .role-btn {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .role-btn:hover {
+      background: rgba(0, 230, 118, 0.04);
+      border-color: var(--primary-green);
+    }
+
+    .role-btn.active {
+      background: rgba(0, 230, 118, 0.12);
+      border-color: var(--primary-green);
+      box-shadow: 0 0 10px rgba(0, 230, 118, 0.15);
+    }
+
+    .role-btn-title {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .role-btn-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+      outline: none;
+    }
+
+    .btn-primary {
+      background: var(--primary-green);
+      color: var(--bg-dark);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      box-shadow: 0 0 15px rgba(0, 230, 118, 0.25);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-white);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Tabs buttons */
+    .scenario-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .scenario-tab {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.02);
+      color: var(--text-white);
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-align: center;
+    }
+
+    .scenario-tab.active.safe {
+      background: rgba(0, 176, 255, 0.15);
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+    }
+
+    .scenario-tab.active.profit {
+      background: rgba(0, 230, 118, 0.15);
+      border-color: var(--primary-green);
+      color: var(--primary-green);
+    }
+
+    .scenario-tab.active.aggressive {
+      background: rgba(255, 61, 0, 0.15);
+      border-color: var(--accent-red);
+      color: var(--accent-red);
+    }
+
+    .rec-scenario-content {
+      display: none;
+    }
+
+    .rec-scenario-content.active {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .profit-sum {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--primary-green);
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .info-box {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .info-lbl {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .info-val {
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .explain-bubble {
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .explain-bubble.why {
+      background: rgba(0, 230, 118, 0.08);
+      border-left: 3px solid var(--primary-green);
+    }
+
+    .explain-bubble.risk {
+      background: rgba(255, 61, 0, 0.08);
+      border-left: 3px solid var(--accent-red);
+    }
+
+    .explain-bubble.next {
+      background: rgba(0, 176, 255, 0.08);
+      border-left: 3px solid var(--accent-blue);
+    }
+
+    /* Market cards */
+    .market-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .market-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--panel-border);
+    }
+
+    /* Timeline steps */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+      margin: 10px 0;
+    }
+
+    .timeline-step {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      opacity: 0.4;
+      transition: all 0.3s ease;
+    }
+
+    .timeline-step.completed {
+      opacity: 0.9;
+    }
+
+    .timeline-step.active {
+      opacity: 1;
+      font-weight: 700;
+    }
+
+    .step-circle {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+
+    .timeline-step.completed .step-circle {
+      background: var(--primary-green);
+      border-color: var(--primary-green);
+      color: var(--bg-dark);
+    }
+
+    .timeline-step.active .step-circle {
+      background: var(--accent-gold);
+      border-color: var(--accent-gold);
+      color: var(--bg-dark);
+      box-shadow: 0 0 8px rgba(255,193,7,0.3);
+    }
+
+    /* Chat bubble system */
+    .chat-box {
+      border-top: 1px solid rgba(255,255,255,0.08);
+      margin-top: 15px;
+      padding-top: 15px;
+    }
+
+    .chat-msg-area {
+      max-height: 140px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .chat-bubble {
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      max-width: 80%;
+      line-height: 1.4;
+    }
+
+    .chat-bubble.sent {
+      background: var(--primary-green);
+      color: var(--bg-dark);
+      align-self: flex-end;
+      border-bottom-right-radius: 0;
+    }
+
+    .chat-bubble.received {
+      background: rgba(255,255,255,0.06);
+      color: var(--text-white);
+      align-self: flex-start;
+      border-bottom-left-radius: 0;
+    }
+
+    .chat-bubble.warning {
+      background: rgba(255,61,0,0.1);
+      border: 1px solid var(--accent-red);
+      color: var(--accent-red);
+      align-self: center;
+      max-width: 100%;
+      font-weight: 500;
+    }
+
+    /* Navbar bottom */
+    nav.bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      display: none;
+      background: rgba(15, 20, 17, 0.95);
+      backdrop-filter: var(--glass-blur);
+      border-top: 1px solid var(--panel-border);
+      grid-template-columns: repeat(4, 1fr);
+      padding: 8px 0;
+      z-index: 1000;
+    }
+
+    .bottom-tab {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--font-sans);
+    }
+
+    .bottom-tab.active {
+      color: var(--primary-green);
+    }
+
+    /* Helpers */
+    .flex-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="tma-wrapper">
+    <!-- Header -->
+    <header>
+      <div class="logo-container">
+        <span class="logo-text">🌾 AgroBalance</span>
+      </div>
+      <div class="trust-badge" id="headerTrustBadge" style="display: none;">
+        <i data-lucide="shield" style="width: 14px; height: 14px;"></i>
+        <span>TI: <b id="headerTrustVal">85</b></span>
+      </div>
+    </header>
+
+    <div class="main-content">
+
+      <!-- VIEW 1: REGISTRATION WIZARD -->
+      <div class="view-panel active" id="view-registration">
+        <div class="glass-card">
+          <div class="step-indicator">
+            <span class="step-dot active" id="dot-1">1</span>
+            <span class="step-line" id="line-1"></span>
+            <span class="step-dot" id="dot-2">2</span>
+            <span class="step-line" id="line-2"></span>
+            <span class="step-dot" id="dot-3">3</span>
+          </div>
+
+          <!-- Reg step 1 -->
+          <div id="reg-step-1">
+            <h3 class="card-title">Выберите вашу роль</h3>
+            <div class="role-grid">
+              <div class="role-btn active" onclick="setRole('Farmer')">
+                <div class="role-btn-title">Фермер</div>
+                <div class="role-btn-desc">Продажа зерна и плодов</div>
+              </div>
+              <div class="role-btn" onclick="setRole('Buyer')">
+                <div class="role-btn-title">Покупатель</div>
+                <div class="role-btn-desc">Закупки агропродукции</div>
+              </div>
+              <div class="role-btn" onclick="setRole('Carrier')">
+                <div class="role-btn-title">Перевозчик</div>
+                <div class="role-btn-desc">Транспортировка зерновозами</div>
+              </div>
+              <div class="role-btn" onclick="setRole('Warehouse')">
+                <div class="role-btn-title">Элеватор</div>
+                <div class="role-btn-desc">Услуги сухого хранения</div>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="margin-top: 20px;" onclick="goToStep(2)">Далее</button>
+          </div>
+
+          <!-- Reg step 2 -->
+          <div id="reg-step-2" style="display: none;">
+            <h3 class="card-title">Контактные данные</h3>
+            <div class="form-group">
+              <label class="form-label">Ваше имя / Название хозяйства</label>
+              <input type="text" id="regName" class="form-input" value="АгроСоюз Петров">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Номер телефона</label>
+              <input type="tel" id="regPhone" class="form-input" value="+79998887766">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Регион работы</label>
+              <select id="regRegion">
+                <option value="Южный">Южный агроокруг</option>
+                <option value="Центральный">Центральный агроокруг</option>
+                <option value="Поволжский">Поволжский агроокруг</option>
+              </select>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 20px;">
+              <button class="btn btn-secondary" onclick="goToStep(1)">Назад</button>
+              <button class="btn btn-primary" onclick="goToStep(3)">Далее</button>
+            </div>
+          </div>
+
+          <!-- Reg step 3 -->
+          <div id="reg-step-3" style="display: none;">
+            <h3 class="card-title">Агро-показатели</h3>
+            
+            <div id="role-fields-Farmer">
+              <div class="form-group">
+                <label class="form-label">Выращиваемая культура</label>
+                <input type="text" id="farmCrop" class="form-input" value="Пшеница 3 класс">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Площадь посевов (га)</label>
+                <input type="number" id="farmArea" class="form-input" value="150">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Ожидаемый сбор (тонн)</label>
+                <input type="number" id="farmYield" class="form-input" value="600">
+                <span style="font-size: 11px; color: var(--text-muted);">
+                  * Нормальная продуктивность: до 10 т/га. Сверхлимиты вызовут штраф антифрода.
+                </span>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <div class="form-group" style="flex: 1;">
+                  <label class="form-label">Широта GPS</label>
+                  <input type="number" step="any" id="farmLat" class="form-input" value="45.035">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                  <label class="form-label">Долгота GPS</label>
+                  <input type="number" step="any" id="farmLon" class="form-input" value="38.975">
+                </div>
+              </div>
+            </div>
+
+            <div id="role-fields-Buyer" style="display: none;">
+              <div class="form-group">
+                <label class="form-label">Интересующие культуры</label>
+                <input type="text" id="buyCrops" class="form-input" value="Пшеница, Кукуруза">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Условия оплаты</label>
+                <input type="text" id="buyPayTerms" class="form-input" value="Безналичный расчет с НДС">
+              </div>
+            </div>
+
+            <div id="role-fields-Carrier" style="display: none;">
+              <div class="form-group">
+                <label class="form-label">Грузоподъемность КАМАЗа/Зерновоза (тонн)</label>
+                <input type="number" id="carrierCap" class="form-input" value="25">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Тариф за километр доставки (руб)</label>
+                <input type="number" id="carrierTariff" class="form-input" value="50">
+              </div>
+            </div>
+
+            <div id="role-fields-Warehouse" style="display: none;">
+              <div class="form-group">
+                <label class="form-label">Вместимость сухого элеватора (тонн)</label>
+                <input type="number" id="whCap" class="form-input" value="10000">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Тариф на хранение (руб/тонна в мес)</label>
+                <input type="number" id="whPrice" class="form-input" value="150">
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 20px;">
+              <button class="btn btn-secondary" onclick="goToStep(2)">Назад</button>
+              <button class="btn btn-primary" onclick="completeRegistration()">Завершить регистрацию</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 2: PROFILE/DASHBOARD -->
+      <div class="view-panel" id="view-profile">
+        <!-- Trust index gauge -->
+        <div class="glass-card" style="background: linear-gradient(135deg, rgba(22, 33, 26, 0.9) 0%, rgba(15, 20, 17, 0.9) 100%);">
+          <h3 class="card-title"><i data-lucide="shield" class="text-green"></i> Индекс доверия</h3>
+          <div style="display: flex; align-items: center; gap: 15px; margin: 10px 0;">
+            <div style="font-size: 40px; font-weight: 800; color: var(--primary-green);" id="profTrustScore">85</div>
+            <div>
+              <div style="font-weight: 700;" id="profTrustZone">Зеленая зона (Высокое доверие)</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">
+                Вам доступны безопасные сделки, скидки перевозчиков и аналитика рынка.
+              </div>
+            </div>
+          </div>
+          
+          <div id="geoVerifyBanner" style="margin-top: 15px; background: rgba(255,193,7,0.08); border: 1px dashed var(--accent-gold); border-radius: 10px; padding: 12px; display: none;">
+            <div style="font-size: 12px; margin-bottom: 8px;">
+              📍 <b>Геолокация поля не подтверждена.</b> Отправьте фото поля и подтвердите гео-координаты для получения +30 очков надежности.
+            </div>
+            <button class="btn btn-primary" style="padding: 8px; font-size: 12px;" onclick="verifyFieldGeo()">
+              Подтвердить геолокацию и загрузить фото поля
+            </button>
+          </div>
+        </div>
+
+        <!-- Profile data details -->
+        <div class="glass-card">
+          <h3 class="card-title"><i data-lucide="user"></i> Личные данные</h3>
+          <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13.5px;" id="profDetails">
+            <!-- Dynamic -->
+          </div>
+        </div>
+
+        <!-- Active deals -->
+        <div class="glass-card">
+          <h3 class="card-title"><i data-lucide="briefcase"></i> Активные сделки</h3>
+          <div id="dealsDashboardList" class="market-list">
+            <!-- Dynamic -->
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 3: MARKETPLACE -->
+      <div class="view-panel" id="view-market">
+        <div class="glass-card">
+          <h3 class="card-title"><i data-lucide="shopping-cart"></i> Предложения о продаже (Зерно)</h3>
+          <div class="market-list" id="salesOffersList">
+            <!-- Dynamic -->
+          </div>
+        </div>
+
+        <div class="glass-card">
+          <h3 class="card-title"><i data-lucide="package"></i> Запросы покупателей</h3>
+          <div class="market-list" id="buyerRequestsList">
+            <!-- Dynamic -->
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 4: AI RECOMMENDATIONS -->
+      <div class="view-panel" id="view-recommendations">
+        <div class="glass-card">
+          <h3 class="card-title"><i data-lucide="trending-up" class="text-green"></i> AI Рекомендации посевов</h3>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">
+            AI-алгоритм оценил спрос, цены конкурентов и индекс дефицита по вашему региону.
+          </p>
+
+          <div class="scenario-tabs">
+            <button class="scenario-tab active safe" onclick="switchScenario('Safe')">Safe 🛡️</button>
+            <button class="scenario-tab profit" onclick="switchScenario('Profit')">Profit 💰</button>
+            <button class="scenario-tab aggressive" onclick="switchScenario('Aggressive')">Aggressive 🔥</button>
+          </div>
+
+          <!-- Safe -->
+          <div class="rec-scenario-content active" id="rec-Safe">
+            <div class="profit-sum" id="safeProfitVal">+1,920,000 руб.</div>
+            <div class="info-grid">
+              <div class="info-box">
+                <div class="info-lbl">Риск сценария</div>
+                <div class="info-val text-green">Низкий (Safe)</div>
+              </div>
+              <div class="info-box">
+                <div class="info-lbl">Культура</div>
+                <div class="info-val">Ячмень яровой</div>
+              </div>
+            </div>
+            <div class="explain-bubble why">
+              <b>Почему выгодно:</b> Цены на ячмень стабильны. Местный пивоваренный завод гарантирует полный выкуп.
+            </div>
+            <div class="explain-bubble risk">
+              <b>Что может пойти не так:</b> Возможна низкая доходность при резком росте рынка пшеницы.
+            </div>
+            <div class="explain-bubble next">
+              <b>Что делать дальше:</b> Забронируйте место на элеваторе 'Золотой Колос' для отложенной продажи.
+            </div>
+          </div>
+
+          <!-- Profit -->
+          <div class="rec-scenario-content" id="rec-Profit">
+            <div class="profit-sum" id="profitProfitVal">+2,800,000 руб.</div>
+            <div class="info-grid">
+              <div class="info-box">
+                <div class="info-lbl">Риск сценария</div>
+                <div class="info-val text-gold">Умеренный (Profit)</div>
+              </div>
+              <div class="info-box">
+                <div class="info-lbl">Культура</div>
+                <div class="info-val">Пшеница 3 класс</div>
+              </div>
+            </div>
+            <div class="explain-bubble why">
+              <b>Почему выгодно:</b> Оптимальный баланс спроса и рыночной цены в Южном округе из-за локального дефицита.
+            </div>
+            <div class="explain-bubble risk">
+              <b>Что может пойти не так:</b> Цены снизятся в пик сбора урожая при одновременном выходе всех фермеров.
+            </div>
+            <div class="explain-bubble next">
+              <b>Что делать дальше:</b> Заключите предварительную сделку с покупателем 'АгроХолдинг Восток'.
+            </div>
+          </div>
+
+          <!-- Aggressive -->
+          <div class="rec-scenario-content" id="rec-Aggressive">
+            <div class="profit-sum" id="aggrProfitVal">+4,200,000 руб.</div>
+            <div class="info-grid">
+              <div class="info-box">
+                <div class="info-lbl">Риск сценария</div>
+                <div class="info-val text-red">Высокий (Aggressive)</div>
+              </div>
+              <div class="info-box">
+                <div class="info-lbl">Культура</div>
+                <div class="info-val">Подсолнечник</div>
+              </div>
+            </div>
+            <div class="explain-bubble why">
+              <b>Почему выгодно:</b> Острый дефицит сырья у переработчиков масла поднял форвардные цены на 40%.
+            </div>
+            <div class="explain-bubble risk">
+              <b>Что может пойти не так:</b> Введение экспортных пошлин или засуха могут свести маржу к нулю.
+            </div>
+            <div class="explain-bubble next">
+              <b>Что делать дальше:</b> Заключите форвардный фьючерсный контракт с предоплатой 30% на AgroBalance.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 5: DEAL DETAIL & TIMELINE -->
+      <div class="view-panel" id="view-deal-detail">
+        <div class="glass-card">
+          <button class="btn btn-secondary" style="width: auto; padding: 6px 12px; font-size: 12px; margin-bottom: 15px;" onclick="setView('profile')">
+            ← К списку
+          </button>
+          
+          <h3 class="card-title" id="dealDetTitle">Детали сделки</h3>
+          <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; margin-bottom: 15px;" id="dealDetFields">
+            <!-- Dynamic -->
+          </div>
+
+          <div style="background: rgba(255,193,7,0.08); border: 1px solid var(--accent-gold); border-radius: 12px; padding: 12px; margin-bottom: 15px;">
+            <div style="font-weight: 700; color: var(--accent-gold); font-size: 13.5px; margin-bottom: 8px;">
+              🛡️ Безопасная сделка (Escrow)
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12.5px;">
+              <div class="flex-row">
+                <span>Сумма товара:</span>
+                <span id="dealDetPrice">0 руб.</span>
+              </div>
+              <div class="flex-row">
+                <span>Сервисный сбор платформы (3%):</span>
+                <span id="dealDetFee">0 руб.</span>
+              </div>
+              <div class="flex-row" style="font-weight: 700; color: var(--primary-green); font-size: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px; margin-top: 4px;">
+                <span>Итого в Escrow:</span>
+                <span id="dealDetTotal">0 руб.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Timeline steps -->
+          <div class="timeline" id="dealTimeline">
+            <div class="timeline-step" id="tstep-proposed">
+              <div class="step-circle">1</div>
+              <div>
+                <div style="font-size: 13.5px;">Предложена</div>
+                <div style="font-size: 11px; color: var(--text-muted);">Ожидание согласия сторон</div>
+              </div>
+            </div>
+            <div class="timeline-step" id="tstep-accepted">
+              <div class="step-circle">2</div>
+              <div>
+                <div style="font-size: 13.5px;">Принята</div>
+                <div style="font-size: 11px; color: var(--text-muted);">Стороны согласны, ожидается платеж</div>
+              </div>
+            </div>
+            <div class="timeline-step" id="tstep-paid">
+              <div class="step-circle">3</div>
+              <div>
+                <div style="font-size: 13.5px;">Оплачена в Escrow</div>
+                <div style="font-size: 11px; color: var(--text-muted);">Средства заблокированы, доставка разрешена</div>
+              </div>
+            </div>
+            <div class="timeline-step" id="tstep-delivered">
+              <div class="step-circle">4</div>
+              <div>
+                <div style="font-size: 13.5px;">Доставлена</div>
+                <div style="font-size: 11px; color: var(--text-muted);">Перевозчик подтвердил разгрузку на весах</div>
+              </div>
+            </div>
+            <div class="timeline-step" id="tstep-completed">
+              <div class="step-circle">5</div>
+              <div>
+                <div style="font-size: 13.5px;">Завершена</div>
+                <div style="font-size: 11px; color: var(--text-muted);">Средства выплачены, комиссия 3% списана</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;" id="dealActionButtons">
+            <!-- Dynamic buttons -->
+          </div>
+
+          <!-- Antifraud chat monitor -->
+          <div class="chat-box">
+            <h4 style="font-size: 13px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+              <i data-lucide="message-square" style="width: 14px; height: 14px;"></i>
+              Чат по сделке (Антифрод защита)
+            </h4>
+            <div class="chat-msg-area" id="chatMsgContainer">
+              <div class="chat-bubble received">Добрый день! Готовы забрать пшеницу по этой цене. Отправляем машину?</div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <input type="text" id="chatInput" class="form-input" placeholder="Напишите сообщение..." style="flex: 1;">
+              <button class="btn btn-primary" style="width: auto; padding: 10px 14px;" onclick="sendChatMessage()">
+                Отправить
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Navigation bottom -->
+    <nav class="bottom-nav" id="bottomNavbar">
+      <button class="bottom-tab active" onclick="setView('profile')">
+        <i data-lucide="user"></i>
+        <span>Профиль</span>
+      </button>
+      <button class="bottom-tab" onclick="setView('market')">
+        <i data-lucide="shopping-cart"></i>
+        <span>Рынок</span>
+      </button>
+      <button class="bottom-tab" id="recTabBtn" onclick="setView('recommendations')">
+        <i data-lucide="trending-up"></i>
+        <span>AI Советы</span>
+      </button>
+      <button class="bottom-tab" onclick="openStarsUpgrades()">
+        <i data-lucide="shield"></i>
+        <span>Услуги</span>
+      </button>
+    </nav>
+  </div>
+
+  <script>
+    // State management
+    let curRole = 'Farmer';
+    let curStep = 1;
+    let userProfile = null;
+    let deals = [
+      {
+        id: 701,
+        crop: "Пшеница 3 класс",
+        volume: 120,
+        price_per_unit: 14200,
+        total_price: 1704000,
+        status: "proposed", // proposed, accepted, paid, delivered, completed, disputed
+        region: "Южный",
+        farmer_name: "АгроСоюз Петров",
+        buyer_name: "Краснодарский Мукомол"
+      }
+    ];
+    let selectedDeal = null;
+
+    function setRole(role) {
+      curRole = role;
+      document.querySelectorAll('.role-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if(btn.innerText.includes(role === 'Farmer' ? 'Фермер' : (role === 'Buyer' ? 'Покупатель' : (role === 'Carrier' ? 'Перевозчик' : 'Элеватор')))) {
+          btn.classList.add('active');
+        }
+      });
+      
+      // Toggle inputs
+      document.getElementById('role-fields-Farmer').style.display = role === 'Farmer' ? 'block' : 'none';
+      document.getElementById('role-fields-Buyer').style.display = role === 'Buyer' ? 'block' : 'none';
+      document.getElementById('role-fields-Carrier').style.display = role === 'Carrier' ? 'block' : 'none';
+      document.getElementById('role-fields-Warehouse').style.display = role === 'Warehouse' ? 'block' : 'none';
+    }
+
+    function goToStep(step) {
+      curStep = step;
+      document.getElementById('reg-step-1').style.display = step === 1 ? 'block' : 'none';
+      document.getElementById('reg-step-2').style.display = step === 2 ? 'block' : 'none';
+      document.getElementById('reg-step-3').style.display = step === 3 ? 'block' : 'none';
+
+      // update indicator dots
+      document.getElementById('dot-1').className = 'step-dot ' + (step >= 1 ? 'active' : '');
+      document.getElementById('line-1').className = 'step-line ' + (step >= 2 ? 'active' : '');
+      document.getElementById('dot-2').className = 'step-dot ' + (step >= 2 ? 'active' : '');
+      document.getElementById('line-2').className = 'step-line ' + (step >= 3 ? 'active' : '');
+      document.getElementById('dot-3').className = 'step-dot ' + (step >= 3 ? 'active' : '');
+    }
+
+    function completeRegistration() {
+      const name = document.getElementById('regName').value;
+      const phone = document.getElementById('regPhone').value;
+      const region = document.getElementById('regRegion').value;
+      
+      let baseTrust = 50;
+
+      // Antifraud rule: impossible yield check
+      if (curRole === 'Farmer') {
+        const area = parseFloat(document.getElementById('farmArea').value);
+        const yld = parseFloat(document.getElementById('farmYield').value);
+        if (area > 0 && yld / area > 10.0) {
+          alert("🛡️ AntiFraud Core Triggered!\nЗаявлена аномальная урожайность: " + (yld/area).toFixed(1) + " т/га (лимит 10.0 т/га).\nИндекс надежности снижен из-за аномальных данных.");
+          baseTrust = 20; // penalized
+        }
+      }
+
+      userProfile = {
+        role: curRole,
+        name: name,
+        phone: phone,
+        region: region,
+        trust_index: baseTrust,
+        crop: document.getElementById('farmCrop').value,
+        area: document.getElementById('farmArea').value,
+        expected_yield: document.getElementById('farmYield').value,
+        needed_crops: document.getElementById('buyCrops').value,
+        payment_terms: document.getElementById('buyPayTerms').value
+      };
+
+      // Header UI
+      document.getElementById('headerTrustBadge').style.display = 'flex';
+      document.getElementById('headerTrustVal').innerText = Math.round(userProfile.trust_index);
+      
+      // Only farmers see recommendations tab
+      document.getElementById('recTabBtn').style.display = curRole === 'Farmer' ? 'flex' : 'none';
+      document.getElementById('bottomNavbar').style.styleSpread = '';
+      document.getElementById('bottomNavbar').style.display = 'grid';
+
+      // Update layouts
+      updateProfileUI();
+      updateMarketUI();
+      setView('profile');
+      
+      lucide.createIcons();
+    }
+
+    function updateProfileUI() {
+      document.getElementById('profTrustScore').innerText = Math.round(userProfile.trust_index);
+      let statusColor = '#00e676';
+      let statusText = 'Зеленая зона (Высокое доверие)';
+      if(userProfile.trust_index < 50) {
+        statusColor = '#ff3d00';
+        statusText = 'Красная зона (Низкое доверие)';
+      } else if (userProfile.trust_index < 80) {
+        statusColor = '#ffc107';
+        statusText = 'Желтая зона (Умеренное доверие)';
+      }
+      document.getElementById('profTrustScore').style.color = statusColor;
+      document.getElementById('profTrustZone').innerText = statusText;
+      document.getElementById('profTrustZone').style.color = statusColor;
+
+      // geo verification banner
+      document.getElementById('geoVerifyBanner').style.display = (curRole === 'Farmer' && userProfile.trust_index < 80) ? 'block' : 'none';
+
+      // details text
+      let html = `
+        <div><b>Название хозяйства:</b> ${userProfile.name}</div>
+        <div><b>Телефон:</b> ${userProfile.phone}</div>
+        <div><b>Регион деятельности:</b> ${userProfile.region}</div>
+        <div><b>Роль в системе:</b> ${curRole === 'Farmer' ? 'Фермер' : (curRole === 'Buyer' ? 'Покупатель' : (curRole === 'Carrier' ? 'Перевозчик' : 'Элеватор'))}</div>
+      `;
+      if(curRole === 'Farmer') {
+        html += `
+          <div><b>Культура посевов:</b> ${userProfile.crop}</div>
+          <div><b>Общая площадь посевов:</b> ${userProfile.area} га</div>
+          <div><b>Ожидаемый сбор:</b> ${userProfile.expected_yield} тонн</div>
+        `;
+      } else if(curRole === 'Buyer') {
+        html += `
+          <div><b>Интересует закупка:</b> ${userProfile.needed_crops}</div>
+          <div><b>Схема оплаты:</b> ${userProfile.payment_terms}</div>
+        `;
+      }
+      document.getElementById('profDetails').innerHTML = html;
+
+      // Update deals dashboard
+      let dealsHtml = '';
+      deals.forEach(d => {
+        if(curRole === 'Farmer' || curRole === 'Buyer') {
+          dealsHtml += `
+            <div class="market-item" onclick="openDealDetail(${d.id})" style="cursor: pointer;">
+              <div>
+                <div style="font-weight:700; font-size: 14px;">${d.crop} (${d.volume} т)</div>
+                <div style="font-size:11px; color: var(--text-muted);">Контрагент: ${curRole === 'Farmer' ? d.buyer_name : d.farmer_name}</div>
+              </div>
+              <span class="trust-badge" style="background:rgba(255,193,7,0.1); border-color:var(--accent-gold); color:var(--accent-gold); font-size:11px;">
+                ${d.status.toUpperCase()}
+              </span>
+            </div>
+          `;
+        }
+      });
+      document.getElementById('dealsDashboardList').innerHTML = dealsHtml || '<div style="color:var(--text-muted); font-size:12px;">Активных сделок нет.</div>';
+    }
+
+    function verifyFieldGeo() {
+      // simulate dynamic trust updater
+      userProfile.trust_index = Math.min(100, userProfile.trust_index + 30);
+      document.getElementById('headerTrustVal').innerText = Math.round(userProfile.trust_index);
+      alert("✅ Геолокация поля подтверждена по спутниковым снимкам!\n+30 к Индексу Надежности.");
+      updateProfileUI();
+    }
+
+    function updateMarketUI() {
+      // Sale list (Farmers)
+      document.getElementById('salesOffersList').innerHTML = `
+        <div class="market-item">
+          <div>
+            <div style="font-weight:700; font-size: 14px;">Пшеница 3 класс (150 тонн)</div>
+            <div style="font-size:12px; margin-top:2px;">Цена: <b>14,200 руб/т</b></div>
+            <div style="font-size:11px; color:var(--text-muted);">Продавец: АгроСоюз Петров (TI: 85)</div>
+          </div>
+          ${curRole === 'Buyer' ? `<button class="btn btn-primary" style="width:auto; padding:6px 12px; font-size:12px;" onclick="initiateMarketDeal('Пшеница 3 класс', 150, 14200, 'АгроСоюз Петров')">Купить</button>` : ''}
+        </div>
+        <div class="market-item">
+          <div>
+            <div style="font-weight:700; font-size: 14px;">Кукуруза желтая (300 тонн)</div>
+            <div style="font-size:12px; margin-top:2px;">Цена: <b>11,000 руб/т</b></div>
+            <div style="font-size:11px; color:var(--text-muted);">Продавец: КФХ Донской (TI: 90)</div>
+          </div>
+          ${curRole === 'Buyer' ? `<button class="btn btn-primary" style="width:auto; padding:6px 12px; font-size:12px;" onclick="initiateMarketDeal('Кукуруза желтая', 300, 11000, 'КФХ Донской')">Купить</button>` : ''}
+        </div>
+      `;
+
+      // Requests list (Buyers)
+      document.getElementById('buyerRequestsList').innerHTML = `
+        <div class="market-item">
+          <div>
+            <div style="font-weight:700; font-size: 14px;">Пшеница (500 тонн)</div>
+            <div style="font-size:12px; margin-top:2px;">Покупает по: <b>14,500 руб/т</b></div>
+            <div style="font-size:11px; color:var(--text-muted);">Покупатель: Краснодарский Мукомол (TI: 95)</div>
+          </div>
+          ${curRole === 'Farmer' ? `<button class="btn btn-primary" style="width:auto; padding:6px 12px; font-size:12px;" onclick="initiateMarketDeal('Пшеница', 500, 14500, 'Краснодарский Мукомол')">Продать</button>` : ''}
+        </div>
+      `;
+    }
+
+    function initiateMarketDeal(crop, vol, price, counterpart) {
+      const dealId = Math.floor(Math.random() * 1000) + 100;
+      const newDeal = {
+        id: dealId,
+        crop: crop,
+        volume: vol,
+        price_per_unit: price,
+        total_price: vol * price,
+        status: 'proposed',
+        region: userProfile.region,
+        farmer_name: curRole === 'Farmer' ? userProfile.name : counterpart,
+        buyer_name: curRole === 'Buyer' ? userProfile.name : counterpart
+      };
+      deals.push(newDeal);
+      updateProfileUI();
+      openDealDetail(dealId);
+    }
+
+    function openDealDetail(dealId) {
+      selectedDeal = deals.find(d => d.id === dealId);
+      setView('deal-detail');
+
+      document.getElementById('dealDetTitle').innerText = `Сделка #${selectedDeal.id} — ${selectedDeal.crop}`;
+      document.getElementById('dealDetFields').innerHTML = `
+        <div><b>Культура:</b> ${selectedDeal.crop}</div>
+        <div><b>Объем партии:</b> ${selectedDeal.volume} тонн</div>
+        <div><b>Цена:</b> ${selectedDeal.price_per_unit.toLocaleString()} руб / тонна</div>
+        <div><b>Продавец:</b> ${selectedDeal.farmer_name}</div>
+        <div><b>Покупатель:</b> ${selectedDeal.buyer_name}</div>
+      `;
+
+      // Update escrow calculator
+      document.getElementById('dealDetPrice').innerText = `${selectedDeal.total_price.toLocaleString()} руб.`;
+      document.getElementById('dealDetFee').innerText = `${(selectedDeal.total_price * 0.03).toLocaleString()} руб.`;
+      document.getElementById('dealDetTotal').innerText = `${(selectedDeal.total_price).toLocaleString()} руб.`;
+
+      // Update stepper visualization
+      updateTimelineStepper();
+
+      // Render action buttons
+      renderActionButtons();
+    }
+
+    function updateTimelineStepper() {
+      const steps = ['proposed', 'accepted', 'paid', 'delivered', 'completed'];
+      let currentIdx = steps.indexOf(selectedDeal.status);
+      
+      steps.forEach((s, idx) => {
+        const el = document.getElementById(`tstep-${s}`);
+        el.className = 'timeline-step';
+        if (idx < currentIdx) {
+          el.classList.add('completed');
+        } else if (idx === currentIdx) {
+          el.classList.add('active');
+        }
+      });
+    }
+
+    function renderActionButtons() {
+      let html = '';
+      if(selectedDeal.status === 'proposed') {
+        html += `<button class="btn btn-primary" onclick="setDealStatus('accepted')">Принять условия сделки</button>`;
+      } else if(selectedDeal.status === 'accepted') {
+        if(curRole === 'Buyer') {
+          html += `
+            <button class="btn btn-primary" onclick="payEscrowSimulate('card')">💳 Оплатить в Escrow банковской картой</button>
+            <button class="btn btn-primary" style="background:#00b0ff; color:#fff;" onclick="payEscrowSimulate('ton')">💎 Оплатить в TON Escrow (смарт-контракт)</button>
+          `;
+        } else {
+          html += `<div style="font-size:12px; color:var(--text-muted); text-align:center;">Ожидание оплаты от покупателя в Escrow...</div>`;
+        }
+      } else if(selectedDeal.status === 'paid') {
+        html += `<button class="btn btn-primary" onclick="setDealStatus('delivered')">🚚 Подтвердить разгрузку перевозчиком</button>`;
+      } else if(selectedDeal.status === 'delivered') {
+        if(curRole === 'Buyer') {
+          html += `<button class="btn btn-primary" onclick="completeDealEscrow()">Подтвердить получение и выплатить продавцу (97%)</button>`;
+        } else {
+          html += `<div style="font-size:12px; color:var(--text-muted); text-align:center;">Ожидание разблокировки средств покупателем...</div>`;
+        }
+      } else if(selectedDeal.status === 'completed') {
+        html += `<div style="font-size:14px; color:var(--primary-green); font-weight:700; text-align:center;">🎉 Сделка завершена. Выплата отправлена продавцу.</div>`;
+      }
+      
+      if(selectedDeal.status !== 'completed' && selectedDeal.status !== 'cancelled') {
+        html += `<button class="btn btn-secondary" onclick="setDealStatus('cancelled')">Отменить сделку</button>`;
+      }
+
+      document.getElementById('dealActionButtons').innerHTML = html;
+    }
+
+    function payEscrowSimulate(method) {
+      alert(`Платеж инициирован!
+Сумма: ${selectedDeal.total_price.toLocaleString()} руб.
+Метод: ${method.toUpperCase()}
+Комиссия 3%: ${(selectedDeal.total_price*0.03).toLocaleString()} руб. списана.
+Деньги заблокированы в Escrow.`);
+      setDealStatus('paid');
+    }
+
+    function completeDealEscrow() {
+      // Dynamic rating update for completed deals
+      userProfile.trust_index = Math.min(100, userProfile.trust_index + 10);
+      document.getElementById('headerTrustVal').innerText = Math.round(userProfile.trust_index);
+      setDealStatus('completed');
+    }
+
+    function setDealStatus(status) {
+      selectedDeal.status = status;
+      updateTimelineStepper();
+      renderActionButtons();
+      updateProfileUI();
+    }
+
+    // Chat system bypass warning simulator
+    function sendChatMessage() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if(!text) return;
+
+      input.value = '';
+      
+      const chatArea = document.getElementById('chatMsgContainer');
+      
+      // Append my message
+      const myBubble = document.createElement('div');
+      myBubble.className = 'chat-bubble sent';
+      myBubble.innerText = text;
+      chatArea.appendChild(myBubble);
+
+      // Check for bypass patterns (direct phone or usernames)
+      const phoneRegex = /\b\d{9,12}\b|@\w+/;
+      if (phoneRegex.test(text)) {
+        setTimeout(() => {
+          // Warning bubble
+          const warnBubble = document.createElement('div');
+          warnBubble.className = 'chat-bubble warning';
+          warnBubble.innerText = "⚠️ AntiFraud Core: Обнаружена попытка отправки прямых контактов в обход комиссии. Ваш Trust Index оштрафован на -30 очков.";
+          chatArea.appendChild(warnBubble);
+          
+          // Penalize user trust index
+          userProfile.trust_index = Math.max(0, userProfile.trust_index - 30);
+          document.getElementById('headerTrustVal').innerText = Math.round(userProfile.trust_index);
+          updateProfileUI();
+          chatArea.scrollTop = chatArea.scrollHeight;
+        }, 800);
+      }
+
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function switchScenario(scenario) {
+      document.querySelectorAll('.scenario-tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.rec-scenario-content').forEach(c => c.classList.remove('active'));
+
+      // Find the tab and content
+      const tab = document.querySelector(`.scenario-tab.${scenario.toLowerCase()}`);
+      if(tab) tab.classList.add('active');
+
+      const content = document.getElementById(`rec-${scenario}`);
+      if(content) content.classList.add('active');
+    }
+
+    function setView(viewId) {
+      document.querySelectorAll('.view-panel').forEach(v => v.classList.remove('active'));
+      document.getElementById(`view-${viewId}`).classList.add('active');
+
+      // Update bottom nav active state
+      document.querySelectorAll('.bottom-tab').forEach(tab => {
+        tab.classList.remove('active');
+        if(tab.innerText.includes(viewId === 'profile' ? 'Профиль' : (viewId === 'market' ? 'Рынок' : (viewId === 'recommendations' ? 'AI Советы' : 'Услуги')))) {
+          tab.classList.add('active');
+        }
+      });
+    }
+
+    function openStarsUpgrades() {
+      // Telegram Stars digital goods purchase upgrade simulator
+      const upgrade = confirm("💎 AgroBalance Дополнительные услуги\n\nКупить 'Ускоренную верификацию поля' за 250 Telegram Stars (★)?\nЭто мгновенно повысит ваш Trust Index на +10.");
+      if (upgrade) {
+        userProfile.trust_index = Math.min(100, userProfile.trust_index + 10);
+        document.getElementById('headerTrustVal').innerText = Math.round(userProfile.trust_index);
+        updateProfileUI();
+        alert("★ Покупка совершена! Услуга активирована. Индекс надежности повышен.");
+      }
+    }
+  </script>
+</body>
+</html>
