@@ -44,3 +44,4 @@ frontend/.next/
 check_deps.py
 START_BOT.bat
 deploy_helper.py
+deploy_to_render.py

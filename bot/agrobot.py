@@ -1541,6 +1541,22 @@ async def cb_admin_users(cb: CallbackQuery):
 
     await cb.message.edit_text(text, reply_markup=kb_back_main())
 
+from aiohttp import web
+
+async def handle_health(request):
+    return web.Response(text="AgroBalance Telegram Bot is running!")
+
+async def start_web_server():
+    port = int(os.environ.get("PORT", 8000))
+    app = web.Application()
+    app.router.add_get("/", handle_health)
+    app.router.add_get("/health", handle_health)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    log.info(f"✅ Web server started on port {port}")
+
 # ─── Entry Point ──────────────────────────────────────────────────────────────
 async def main():
     if not BOT_TOKEN:
@@ -1559,6 +1575,9 @@ async def main():
     except Exception as e:
         log.error(f"❌ Не удалось подключиться к Telegram: {e}")
         sys.exit(1)
+
+    # Start web server to pass Render port checks
+    await start_web_server()
 
     log.info("✅ Бот запущен. Ожидаем сообщения...")
     await dp.start_polling(bot, allowed_updates=["message","callback_query"])
