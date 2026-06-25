@@ -7,7 +7,7 @@ import './App.css';
 
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? "http://127.0.0.1:8000/api/v1"
-  : "https://agrobalance-bot-service.onrender.com/api/v1";
+  : "https://agrobalance-backend-image.onrender.com/api/v1";
 
 function App() {
   const [view, setView] = useState('registration'); // registration, dashboard, market, recommendations, deal-detail, admin
