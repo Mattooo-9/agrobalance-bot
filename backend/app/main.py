@@ -92,7 +92,7 @@ async def daily_maintenance_loop():
     while True:
         await asyncio.sleep(24 * 60 * 60)  # Wait 24h between runs
         print("[Maintenance] ⏰ Running scheduled daily database maintenance...")
-        await asyncio.get_event_loop().run_in_executor(None, run_db_maintenance)
+        await asyncio.to_thread(run_db_maintenance)
 
 
 @asynccontextmanager
@@ -194,7 +194,7 @@ async def lifespan(app: FastAPI):
         db.close()
 
     # Run maintenance immediately on startup
-    await asyncio.get_event_loop().run_in_executor(None, run_db_maintenance)
+    await asyncio.to_thread(run_db_maintenance)
 
     # Start daily maintenance background task
     maintenance_task = asyncio.create_task(daily_maintenance_loop())

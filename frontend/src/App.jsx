@@ -473,6 +473,7 @@ function App() {
     }
   };
 
+  // One-time init: load mocks + detect Telegram user
   useEffect(() => {
     loadMocks();
 
@@ -480,7 +481,7 @@ function App() {
       const webapp = window.Telegram.WebApp;
       webapp.ready();
       webapp.expand();
-      
+
       const tgUser = webapp.initDataUnsafe?.user;
       if (tgUser) {
         const tgIdStr = tgUser.id.toString();
@@ -489,12 +490,16 @@ function App() {
           name: tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : ''),
           telegram_id: tgIdStr
         }));
-        if (!token) {
+        // Try silent auto-login by Telegram ID
+        if (!localStorage.getItem('token')) {
           checkAutoLogin(tgIdStr);
         }
       }
     }
+  }, []); // run once on mount
 
+  // Whenever a valid token appears — fetch full profile
+  useEffect(() => {
     if (token) {
       fetchProfile();
     }
@@ -603,8 +608,11 @@ function App() {
         localStorage.setItem('token', data.access_token);
         setToken(data.access_token);
         if (data.fraud_flags_triggered) {
-          alert(`Внимание: сработали триггеры антифрода! ${data.fraud_details[0].details}`);
+          alert(`Внимание: сработали триггеры антифрода! ${data.fraud_details?.[0]?.details || ''}`);
         }
+      } else {
+        // Registration succeeded but no token — show error
+        alert(language === 'ru' ? 'Ошибка регистрации. Попробуйте снова.' : 'Registration error. Please try again.');
       }
     } catch (err) {
       console.log("Registering inside client database simulation.");
@@ -631,9 +639,10 @@ function App() {
 
   const handleResetSession = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('lang');
     setToken('');
     setUser(null);
-    setView('registration');
+    setView('lang-select'); // back to language selection — clean re-entry
   };
 
   const handleGenerateRecommendations = async () => {
@@ -1502,7 +1511,7 @@ function App() {
                   </div>
                   <div className="calc-row total">
                     <span>{TRANSLATIONS[language].escrow_total_pay}</span>
-                    <span>{(activeDealData.deal.total_price).toLocaleString()} {TRANSLATIONS[language].rubles}</span>
+                    <span>{Math.round(activeDealData.deal.total_price * 1.01).toLocaleString()} {TRANSLATIONS[language].rubles}</span>
                   </div>
                 </div>
               </div>

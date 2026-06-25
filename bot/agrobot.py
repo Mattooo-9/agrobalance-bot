@@ -1643,7 +1643,6 @@ async def main(start_http=True):
             await dp.start_polling(
                 bot,
                 allowed_updates=["message", "callback_query"],
-                close_bot_session=False,   # keep session alive between restarts
             )
             # start_polling returned cleanly (graceful stop signal)
             log.info("⏹️ Polling завершён штатно.")
