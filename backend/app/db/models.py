@@ -53,6 +53,8 @@ class User(Base):
     # Referrals
     referred_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     referral_code = Column(String, unique=True, index=True, nullable=True)
+    state = Column(String, default="idle")
+    state_data = Column(String, default="{}")
 
     # Relationships
     referred_by = relationship("User", remote_side=[id])

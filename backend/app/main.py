@@ -118,7 +118,7 @@ def startup_event():
     try:
         import asyncio
         from bot.agrobot import main as agrobot_main
-        asyncio.create_task(agrobot_main())
+        asyncio.create_task(agrobot_main(start_http=False))
         print("Telegram bot started successfully in background.")
     except Exception as e:
         print(f"Error starting Telegram bot in background: {e}")

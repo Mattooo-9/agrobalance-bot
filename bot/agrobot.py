@@ -1558,7 +1558,7 @@ async def start_web_server():
     log.info(f"✅ Web server started on port {port}")
 
 # ─── Entry Point ──────────────────────────────────────────────────────────────
-async def main():
+async def main(start_http=True):
     if not BOT_TOKEN:
         print("❌ TELEGRAM_BOT_TOKEN не задан в .env файле!")
         sys.exit(1)
@@ -1578,16 +1578,17 @@ async def main():
         await bot.set_chat_menu_button(
             menu_button=MenuButtonWebApp(
                 text="AgroBalance",
-                web_app=WebAppInfo(url="https://agrobalance-app.onrender.com")
+                web_app=WebAppInfo(url="https://Mattooo-9.github.io/agrobalance-bot/")
             )
         )
-        log.info("✅ Telegram Mini App Menu Button set to: https://agrobalance-app.onrender.com")
+        log.info("✅ Telegram Mini App Menu Button set to: https://Mattooo-9.github.io/agrobalance-bot/")
     except Exception as e:
         log.error(f"❌ Не удалось подключиться к Telegram или настроить кнопку WebApp: {e}")
         sys.exit(1)
 
     # Start web server to pass Render port checks
-    await start_web_server()
+    if start_http:
+        await start_web_server()
 
     log.info("✅ Бот запущен. Ожидаем сообщения...")
     await dp.start_polling(bot, allowed_updates=["message","callback_query"])

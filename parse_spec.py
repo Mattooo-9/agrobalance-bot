@@ -9,6 +9,6 @@ with open(file_path, "r", encoding="utf-8") as f:
 json_str = lines[8].strip()
 data = json.loads(json_str)
 
-static_details = data["components"]["schemas"]["staticSiteDetailsPOST"]
-print("--- staticSiteDetailsPOST Schema ---")
-print(json.dumps(static_details, indent=2))
+image_schema = data["components"]["schemas"]["image"]
+print("--- image Schema ---")
+print(json.dumps(image_schema, indent=2))

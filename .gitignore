@@ -47,3 +47,8 @@ deploy_helper.py
 deploy_to_render.py
 update_render_service.py
 deploy_static_app.py
+check_render_deploys.py
+get_deploy_details.py
+get_build_logs.py
+get_service_events.py
+get_deploy_hook.py
