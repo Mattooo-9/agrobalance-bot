@@ -25,6 +25,36 @@ function App() {
   const [chatMessage, setChatMessage] = useState('');
   const [adminLogs, setAdminLogs] = useState([]);
   const [trustEvents, setTrustEvents] = useState([]);
+  const [tonWalletAddress, setTonWalletAddress] = useState('');
+  const [tonConnectUI, setTonConnectUI] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('card'); // card, stars, ton
+
+  useEffect(() => {
+    let uiInstance = null;
+    const initTonConnect = () => {
+      try {
+        const lib = window.TON_CONNECT_UI || window.TonConnectUI;
+        if (lib && lib.TonConnectUI) {
+          const tc = new lib.TonConnectUI({
+            manifestUrl: 'https://Mattooo-9.github.io/agrobalance-bot/tonconnect-manifest.json'
+          });
+          setTonConnectUI(tc);
+          uiInstance = tc;
+          tc.onStatusChange((walletInfo) => {
+            if (walletInfo) {
+              setTonWalletAddress(walletInfo.account.address);
+            } else {
+              setTonWalletAddress('');
+            }
+          });
+        }
+      } catch (e) {
+        console.error("Failed to initialize TON Connect UI", e);
+      }
+    };
+    const timer = setTimeout(initTonConnect, 500);
+    return () => clearTimeout(timer);
+  }, []);
   
   // Registration Form States
   const [regStep, setRegStep] = useState(1);
@@ -466,10 +496,21 @@ function App() {
           🌾 AgroBalance
         </div>
         {user && (
-          <div className="user-badge">
+          <div className="user-badge" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <span className="trust-index-badge">
-              💎 Trust Index: {Math.round(user.trust_index)}
+              💎 TI: {Math.round(user.trust_index)}
             </span>
+            {tonWalletAddress ? (
+              <span className="wallet-badge" title={tonWalletAddress} style={{ fontSize: '11px', background: 'rgba(0,176,255,0.15)', border: '1px solid var(--accent-blue)', color: 'var(--accent-blue)', padding: '6px 10px', borderRadius: '20px', cursor: 'pointer' }} onClick={() => tonConnectUI.disconnect()}>
+                Wallet: {tonWalletAddress.slice(0, 4)}...{tonWalletAddress.slice(-4)}
+              </span>
+            ) : (
+              tonConnectUI && (
+                <button onClick={() => tonConnectUI.openModal()} className="btn-secondary" style={{ padding: '6px 10px', fontSize: '11px', color: 'var(--accent-blue)', borderColor: 'var(--accent-blue)', background: 'transparent' }}>
+                  Wallet ⚡
+                </button>
+              )
+            )}
             <button onClick={handleLogout} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }}>
               Выйти
             </button>
@@ -749,25 +790,39 @@ function App() {
             
             {/* Trust Index Card */}
             <div className="glass-panel" style={{ background: 'linear-gradient(135deg, rgba(22, 33, 26, 0.9) 0%, rgba(15, 20, 17, 0.9) 100%)' }}>
-              <h3 className="panel-title"><Shield className="text-green" /> Ваш индекс надежности</h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', margin: '15px 0' }}>
-                <div style={{ 
-                  fontSize: '44px', fontWeight: '800', 
-                  color: user.trust_index >= 80 ? 'var(--primary-green)' : (user.trust_index >= 50 ? 'var(--accent-gold)' : 'var(--accent-red)') 
-                }}>
-                  {Math.round(user.trust_index)}
-                </div>
-                <div>
-                  <div style={{ fontWeight: '600' }}>
-                    {user.trust_index >= 80 ? 'Высокое доверие (Зеленая зона)' : (user.trust_index >= 50 ? 'Базовое доверие (Желтая зона)' : 'Низкое доверие (Красная зона)')}
+              <h3 className="panel-title"><Shield className="text-green" /> Ваш игровой ранг AgroBalance</h3>
+              
+              {(() => {
+                const getTier = (ti) => {
+                  if (ti >= 90) return { name: "🏆 Золотой Агро-Лидер", color: "var(--accent-gold)", desc: "Комиссия 1%. Скидка 10% на элеваторах, повышенный приоритет сделок." };
+                  if (ti >= 75) return { name: "🥈 Серебряный Партнер", color: "#e0e0e0", desc: "Увеличенный лимит сделок, приоритет в подборе перевозчиков." };
+                  if (ti >= 50) return { name: "🥉 Бронзовый Участник", color: "#cd7f32", desc: "Базовый доступ к рынку и ИИ-аналитике." };
+                  return { name: "⚠️ Новичок (Под наблюдением)", color: "var(--accent-red)", desc: "Пониженный рейтинг. Подтвердите геолокацию поля для разблокировки." };
+                };
+                const tier = getTier(user.trust_index);
+
+                return (
+                  <div className="tier-progress-container" style={{ margin: '15px 0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                      <span>Игровой Ранг: <b style={{ color: tier.color }}>{tier.name}</b></span>
+                      <span><b>{Math.round(user.trust_index)}</b> / 100 TI</span>
+                    </div>
+                    <div style={{ width: '100%', height: '10px', background: 'rgba(255,255,255,0.08)', borderRadius: '5px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ 
+                        width: `${Math.max(5, Math.min(100, user.trust_index))}%`, 
+                        height: '100%', 
+                        background: `linear-gradient(90deg, var(--primary-green) 0%, ${tier.color} 100%)`, 
+                        borderRadius: '5px', 
+                        boxShadow: `0 0 8px ${tier.color}80`,
+                        transition: 'width 0.6s ease-out' 
+                      }}></div>
+                    </div>
+                    <div style={{ fontSize: '13px', color: 'var(--text-white)', marginTop: '10px', opacity: 0.8 }}>
+                      ⚡ <b>Бонус ранга:</b> {tier.desc}
+                    </div>
                   </div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    {user.trust_index >= 80 
-                      ? 'Вам доступны расширенная аналитика, безопасные сделки, скидки и приоритет.' 
-                      : 'Завершите несколько честных сделок, чтобы разблокировать доступ к агрорынку.'}
-                  </div>
-                </div>
-              </div>
+                );
+              })()}
               
               {/* If Farmer, show quick verification */}
               {user.role === 'Farmer' && user.verification_status === 'pending' && (
@@ -1096,9 +1151,96 @@ function App() {
                 )}
                 
                 {activeDealData.deal.status === 'accepted' && user && user.role === 'Buyer' && (
-                  <button onClick={() => executeDealAction('pay-escrow')} className="btn btn-primary">
-                    Оплатить в Escrow (Карта / TON)
-                  </button>
+                  <div className="glass-panel" style={{ marginTop: '10px', background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)' }}>
+                    <h4 style={{ fontSize: '14px', marginBottom: '10px' }}>💳 Выберите способ оплаты:</h4>
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                      <button 
+                        onClick={() => setPaymentMethod('card')} 
+                        className="btn" 
+                        style={{ flex: 1, padding: '8px', fontSize: '12px', background: paymentMethod === 'card' ? 'var(--primary-green)' : 'rgba(255,255,255,0.05)', color: paymentMethod === 'card' ? 'var(--bg-dark)' : 'var(--text-white)' }}
+                      >
+                        Карта 💳
+                      </button>
+                      <button 
+                        onClick={() => setPaymentMethod('stars')} 
+                        className="btn" 
+                        style={{ flex: 1, padding: '8px', fontSize: '12px', background: paymentMethod === 'stars' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.05)', color: paymentMethod === 'stars' ? 'var(--bg-dark)' : 'var(--text-white)' }}
+                      >
+                        Stars ⭐
+                      </button>
+                      <button 
+                        onClick={() => setPaymentMethod('ton')} 
+                        className="btn" 
+                        style={{ flex: 1, padding: '8px', fontSize: '12px', background: paymentMethod === 'ton' ? 'var(--accent-blue)' : 'rgba(255,255,255,0.05)', color: paymentMethod === 'ton' ? 'var(--bg-dark)' : 'var(--text-white)' }}
+                      >
+                        TON 💎
+                      </button>
+                    </div>
+
+                    <button 
+                      onClick={async () => {
+                        if (paymentMethod === 'ton') {
+                          if (!tonWalletAddress) {
+                            alert("Пожалуйста, сначала подключите TON-кошелек с помощью кнопки Wallet ⚡ в правом верхнем углу!");
+                            return;
+                          }
+                          try {
+                            const res = await fetch(`${API_BASE}/payments/escrow/create`, {
+                              method: 'POST',
+                              headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}` 
+                              },
+                              body: JSON.stringify({ deal_id: activeDealId })
+                            });
+                            if (!res.ok) throw new Error("Не удалось создать Escrow-контракт на сервере");
+                            const details = await res.json();
+                            
+                            const txPayload = {
+                              validUntil: Math.floor(Date.now() / 1000) + 360,
+                              messages: [
+                                {
+                                  address: details.escrow_contract_address,
+                                  amount: details.wallet_payload.amount.toString(),
+                                  payload: details.wallet_payload.payload
+                                }
+                              ]
+                            };
+                            
+                            const txRes = await tonConnectUI.sendTransaction(txPayload);
+                            
+                            const confirmRes = await fetch(`${API_BASE}/payments/escrow/deposit`, {
+                              method: 'POST',
+                              headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                              },
+                              body: JSON.stringify({
+                                action: { deal_id: activeDealId },
+                                tx_hash: txRes.boc
+                              })
+                            });
+                            
+                            if (confirmRes.ok) {
+                              alert("🚀 Транзакция подтверждена! Средства заблокированы в смарт-контракте TON.");
+                              fetchDeals();
+                              loadDealDetail(activeDealId);
+                            } else {
+                              throw new Error("Не удалось зарегистрировать транзакцию на сервере");
+                            }
+                          } catch (err) {
+                            console.error(err);
+                            alert("Ошибка транзакции TON: " + err.message);
+                          }
+                        } else {
+                          executeDealAction('pay-escrow');
+                        }
+                      }} 
+                      className="btn btn-primary"
+                    >
+                      Подтвердить оплату ({paymentMethod === 'ton' ? 'TON Crypto' : (paymentMethod === 'stars' ? 'Stars' : 'Рубли')})
+                    </button>
+                  </div>
                 )}
 
                 {activeDealData.deal.status === 'paid_to_escrow' && user && (user.role === 'Carrier' || user.role === 'Farmer') && (

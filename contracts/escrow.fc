@@ -1,5 +1,5 @@
 ;; TON Escrow Smart Contract in FunC
-;; AgroBalance platform fee is 3%
+;; AgroBalance platform fee is 1%
 
 #include "imports/stdlib.fc";
 
@@ -68,7 +68,7 @@ void recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg
         throw_unless(401, equal_slices(sender_address, buyer));
         throw_unless(402, status == 1);
 
-        int fee = (amount * 3) / 100;
+        int fee = amount / 100;
         int seller_share = amount - fee;
 
         ;; Send 97% to seller
@@ -82,14 +82,14 @@ void recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg
             .end_cell();
         send_raw_message(msg_seller, 1); ;; pay transfer fees separately
 
-        ;; Send 3% to platform
+        ;; Send 1% to platform
         var msg_platform = begin_cell()
             .store_uint(0x18, 6)
             .store_slice(platform)
             .store_coins(fee)
             .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
             .store_uint(0, 32)
-            .store_slice("AgroBalance 3% Fee")
+            .store_slice("AgroBalance 1% Fee")
             .end_cell();
         send_raw_message(msg_platform, 1);
 
@@ -128,8 +128,8 @@ void recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg
             send_raw_message(msg_buyer, 1);
             status = 4; ;; refunded
         } else {
-            ;; Release to Seller (with 3% commission)
-            int fee = (amount * 3) / 100;
+            ;; Release to Seller (with 1% commission)
+            int fee = amount / 100;
             int seller_share = amount - fee;
 
             var msg_seller = begin_cell()
@@ -148,7 +148,7 @@ void recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg
                 .store_coins(fee)
                 .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
                 .store_uint(0, 32)
-                .store_slice("AgroBalance 3% Dispute Fee")
+                .store_slice("AgroBalance 1% Dispute Fee")
                 .end_cell();
             send_raw_message(msg_platform, 1);
             status = 2; ;; completed

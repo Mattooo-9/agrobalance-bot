@@ -49,14 +49,15 @@ class TONCryptoProvider(PaymentProviderInterface):
     Tracks state of deployed escrow smart contract details.
     """
     def initiate_payment(self, deal_id: int, amount: float, currency: str = "TON") -> dict:
-        contract_addr = f"EQA_escrow_deal_{deal_id}_{uuid.uuid4().hex[:8]}"
+        contract_addr = f"EQI_escrow_deal_{deal_id}_{uuid.uuid4().hex[:8]}"
+        crypto_amount = round(amount / 120.0, 4)  # fake exchange rate for demo
         return {
             "status": "success",
             "escrow_contract_address": contract_addr,
-            "required_amount_crypto": round(amount / 120.0, 4),  # fake rate e.g. 1 TON = 120 RUB for demo
+            "required_amount_crypto": crypto_amount,
             "wallet_payload": {
                 "address": contract_addr,
-                "amount": int(amount * 1000000),  # nanotons
+                "amount": int(crypto_amount * 1_000_000_000),  # nanotons (9 decimals)
                 "payload": f"deposit:{deal_id}"
             }
         }
