@@ -45,3 +45,4 @@ check_deps.py
 START_BOT.bat
 deploy_helper.py
 deploy_to_render.py
+update_render_service.py

@@ -9,6 +9,6 @@ with open(file_path, "r", encoding="utf-8") as f:
 json_str = lines[8].strip()
 data = json.loads(json_str)
 
-native_env_details = data["components"]["schemas"]["nativeEnvironmentDetailsPOST"]
-print("--- nativeEnvironmentDetailsPOST Schema ---")
-print(json.dumps(native_env_details, indent=2))
+static_details = data["components"]["schemas"]["staticSiteDetailsPOST"]
+print("--- staticSiteDetailsPOST Schema ---")
+print(json.dumps(static_details, indent=2))

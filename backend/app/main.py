@@ -114,6 +114,15 @@ def startup_event():
     finally:
         db.close()
 
+    # Start Telegram bot in background
+    try:
+        import asyncio
+        from bot.agrobot import main as agrobot_main
+        asyncio.create_task(agrobot_main())
+        print("Telegram bot started successfully in background.")
+    except Exception as e:
+        print(f"Error starting Telegram bot in background: {e}")
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to AgroBalance API", "status": "running"}
