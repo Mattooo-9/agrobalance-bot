@@ -354,6 +354,23 @@ class AntiSpamMiddleware(BaseMiddleware):
         super().__init__()
 
     async def __call__(self, handler, event: TelegramObject, data: dict):
+        if isinstance(event, (Message, CallbackQuery)):
+            user_id = event.from_user.id
+            tg_id = str(user_id)
+            
+            # AntiFraud / Low Trust index blocking:
+            user = get_user(tg_id)
+            if user and user["trust_index"] < 20.0 and user["role"] != "Admin":
+                if isinstance(event, Message):
+                    await event.answer(
+                        "⚠️ *Доступ к AgroBalance заблокирован!*\n\n"
+                        "Ваш рейтинг доверия (*TI < 20*) опустился ниже критической отметки из-за подозрительной активности.\n"
+                        "🛡️ Все операции приостановлены. Для разблокировки обратитесь в службу поддержки."
+                    )
+                elif isinstance(event, CallbackQuery):
+                    await event.answer("⚠️ Доступ заблокирован (TI < 20). Все операции приостановлены.", show_alert=True)
+                return
+
         if isinstance(event, Message):
             user_id = event.from_user.id
             now = datetime.now()
@@ -372,6 +389,7 @@ class AntiSpamMiddleware(BaseMiddleware):
                     return
             self.last_msg[user_id] = now
         return await handler(event, data)
+
 
 dp.message.outer_middleware(AntiSpamMiddleware(limit=1.0))
 dp.callback_query.outer_middleware(AntiSpamMiddleware(limit=0.5))

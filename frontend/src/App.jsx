@@ -515,6 +515,12 @@ function App() {
         handleResetSession();
         return;
       }
+      if (res.status === 403) {
+        setUser(null);
+        setView('blocked');
+        setLoading(false);
+        return;
+      }
       const data = await res.json();
       setUser(data);
       setView('dashboard');
@@ -873,6 +879,33 @@ function App() {
       {/* Main Content Area */}
       <main className="container">
         
+        {/* VIEW: BLOCKED */}
+        {view === 'blocked' && (
+          <div className="glass-panel" style={{ textAlign: 'center', padding: '40px 20px', borderColor: 'var(--accent-red)' }}>
+            <AlertTriangle className="text-red" size={48} style={{ margin: '0 auto 16px', display: 'block', color: 'var(--accent-red)' }} />
+            <h3 className="panel-title" style={{ justifyContent: 'center', fontSize: '20px', color: 'var(--accent-red)' }}>
+              {language === 'ru' ? 'Доступ заблокирован' : 'Access Blocked'}
+            </h3>
+            <p style={{ color: 'var(--text-white)', marginTop: '16px', fontSize: '14px', lineHeight: '1.6' }}>
+              {language === 'ru' 
+                ? 'Ваша учетная запись AgroBalance временно приостановлена службой безопасности из-за критического падения рейтинга доверия (TI < 20).' 
+                : 'Your AgroBalance account has been temporarily suspended by the security system due to a critical drop in your Trust Index (TI < 20).'}
+            </p>
+            <p style={{ color: 'var(--text-muted)', marginTop: '8px', fontSize: '13px' }}>
+              {language === 'ru'
+                ? '🛡️ Подозрительная активность заблокирована. Пожалуйста, свяжитесь с поддержкой.'
+                : '🛡️ Suspicious activity blocked. Please contact support.'}
+            </p>
+            <button 
+              onClick={handleResetSession} 
+              className="btn btn-secondary" 
+              style={{ marginTop: '24px' }}
+            >
+              {language === 'ru' ? 'Вернуться к выбору языка' : 'Back to Language Selection'}
+            </button>
+          </div>
+        )}
+
         {/* VIEW: LANGUAGE SELECTION */}
         {view === 'lang-select' && (
           <div className="glass-panel" style={{ textAlign: 'center', padding: '30px 20px' }}>

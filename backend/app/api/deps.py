@@ -24,4 +24,9 @@ def get_current_user(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Пользователь не найден",
         )
+    if user.trust_index < 20.0 and user.role != "Admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Доступ заблокирован из-за низкого рейтинга доверия (TI < 20)",
+        )
     return user
