@@ -30,6 +30,9 @@ def deploy_to_render(api_key, repo_url):
         return None
 
 if __name__ == "__main__":
-    api_key = "rnd_IIUi6ty5HnbEo0IGvgb8hLEj04oO"
+    import os
+    from dotenv import load_dotenv
+    load_dotenv()
+    api_key = os.getenv("RENDER_API_KEY")
     repo_url = "https://github.com/Mattooo-9/agrobalance-bot"
     deploy_to_render(api_key, repo_url)
