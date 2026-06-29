@@ -313,6 +313,13 @@ function App() {
   const [tonConnectUI, setTonConnectUI] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('card'); // card, stars, ton
   const [toast, setToast] = useState(null); // { message: '', type: 'success' | 'warning' | 'danger' | 'info' }
+  
+  // Admin panel state variables
+  const [adminUsers, setAdminUsers] = useState([]);
+  const [adminLogs, setAdminLogs] = useState([]);
+  const [adminSelectedUserId, setAdminSelectedUserId] = useState('');
+  const [adminTrustChange, setAdminTrustChange] = useState(10);
+  const [adminTrustReason, setAdminTrustReason] = useState('Аудит профиля');
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -543,6 +550,10 @@ function App() {
       if (data.role === 'Farmer') {
         fetchRecommendations();
       }
+      if (data.role === 'Admin') {
+        fetchAdminUsers();
+        fetchAdminLogs();
+      }
       fetchTrustEvents();
     } catch (e) {
       console.log("Using Mock Profiles since API offline.");
@@ -561,6 +572,53 @@ function App() {
       setView('dashboard');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAdminUsers = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/users/admin/users`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAdminUsers(data);
+      }
+    } catch (e) {}
+  };
+
+  const fetchAdminLogs = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/users/admin/antifraud-logs`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAdminLogs(data);
+      }
+    } catch (e) {}
+  };
+
+  const handleAdjustTrust = async (userId, change, reason) => {
+    try {
+      const res = await fetch(`${API_BASE}/users/admin/users/adjust-trust`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ user_id: userId, change, reason })
+      });
+      if (res.ok) {
+        showToast(language === 'ru' ? 'Рейтинг доверия изменен!' : 'Trust score adjusted!', 'success');
+        fetchAdminUsers();
+        fetchAdminLogs();
+      } else {
+        const err = await res.json();
+        showToast(err.detail || 'Error adjusting trust', 'danger');
+      }
+    } catch (e) {
+      showToast('Offline or connection error', 'danger');
     }
   };
 
@@ -905,6 +963,12 @@ function App() {
               {TRANSLATIONS[language].ai_advice}
             </button>
           )}
+          {user.role === 'Admin' && (
+            <button className={`nav-tab ${view === 'admin' ? 'active' : ''}`} onClick={() => { setView('admin'); fetchAdminUsers(); fetchAdminLogs(); }}>
+              <Shield size={18} />
+              {language === 'ru' ? 'Админка' : 'Admin'}
+            </button>
+          )}
         </nav>
       )}
 
@@ -935,6 +999,118 @@ function App() {
             >
               {language === 'ru' ? 'Вернуться к выбору языка' : 'Back to Language Selection'}
             </button>
+          </div>
+        )}
+
+        {/* VIEW: ADMIN PANEL */}
+        {view === 'admin' && user && user.role === 'Admin' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            
+            {/* AntiFraud Logs Card */}
+            <div className="glass-panel">
+              <h3 className="panel-title" style={{ color: 'var(--accent-red)' }}><AlertTriangle /> {language === 'ru' ? '🛡️ Логи антифрода' : '🛡️ AntiFraud Activity Logs'}</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '300px', overflowY: 'auto', paddingRight: '4px' }}>
+                {adminLogs.length === 0 ? (
+                  <div style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '12px' }}>
+                    {language === 'ru' ? 'Логов антифрода нет' : 'No suspicious logs'}
+                  </div>
+                ) : (
+                  adminLogs.map(l => (
+                    <div key={l.id} className="match-card" style={{ borderColor: l.severity === 'high' ? 'var(--accent-red)' : 'var(--accent-gold)', background: 'rgba(255,255,255,0.01)', padding: '12px', display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', width: '100%' }}>
+                        <span style={{ fontWeight: '600', fontSize: '13px' }}>{l.user_name} (ID: {l.user_id})</span>
+                        <span style={{ fontSize: '11px', color: l.severity === 'high' ? 'var(--accent-red)' : 'var(--accent-gold)', textTransform: 'uppercase', fontWeight: '700' }}>{l.severity}</span>
+                      </div>
+                      <div style={{ fontSize: '13px', color: 'var(--text-white)' }}><b>{l.rule_triggered}</b>: {l.details}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>{new Date(l.created_at).toLocaleString()}</div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Users Control Board */}
+            <div className="glass-panel">
+              <h3 className="panel-title"><UserIcon /> {language === 'ru' ? '👥 Управление участниками' : '👥 Market Members Control'}</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                
+                {/* Adjust Trust form */}
+                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '10px' }}>
+                  <h4 style={{ fontSize: '14px', marginBottom: '10px', color: 'var(--primary-green)' }}>{language === 'ru' ? 'Модерация рейтинга (Trust Index)' : 'Adjust Trust Index'}</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div className="form-group">
+                      <label className="form-label">{language === 'ru' ? 'Выберите пользователя' : 'Select User'}</label>
+                      <select 
+                        className="form-control" 
+                        value={adminSelectedUserId} 
+                        onChange={e => setAdminSelectedUserId(e.target.value)}
+                      >
+                        <option value="">-- {language === 'ru' ? 'Выберите' : 'Select'} --</option>
+                        {adminUsers.map(u => (
+                          <option key={u.id} value={u.id}>{u.name} ({TRANSLATIONS[language].roles[u.role] || u.role}) | TI: {Math.round(u.trust_index)}</option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label className="form-label">{language === 'ru' ? 'Изменение рейтинга' : 'TI Delta'}</label>
+                        <input 
+                          type="number" className="form-control" 
+                          value={adminTrustChange} 
+                          onChange={e => setAdminTrustChange(parseFloat(e.target.value))} 
+                        />
+                      </div>
+                      <div className="form-group" style={{ flex: 2 }}>
+                        <label className="form-label">{language === 'ru' ? 'Причина' : 'Reason'}</label>
+                        <input 
+                          type="text" className="form-control" 
+                          value={adminTrustReason} 
+                          onChange={e => setAdminTrustReason(e.target.value)} 
+                        />
+                      </div>
+                    </div>
+                    
+                    <button 
+                      onClick={() => {
+                        if (!adminSelectedUserId) {
+                          showToast(language === 'ru' ? 'Выберите пользователя!' : 'Please select a user first!', 'warning');
+                          return;
+                        }
+                        handleAdjustTrust(parseInt(adminSelectedUserId), adminTrustChange, adminTrustReason);
+                      }}
+                      className="btn btn-primary"
+                    >
+                      {language === 'ru' ? 'Применить изменения' : 'Apply Adjustment'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Users List */}
+                <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {adminUsers.map(u => (
+                    <div key={u.id} className="match-card" style={{ padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontWeight: '600', fontSize: '14px' }}>{u.name}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                          {TRANSLATIONS[language].roles[u.role] || u.role} • {TRANSLATIONS[language].regions[u.region] || u.region || '—'} • {u.phone}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div className={`trust-index-badge ${u.trust_index >= 80 ? 'text-green' : (u.trust_index >= 50 ? 'text-gold' : 'text-red')}`} style={{ padding: '4px 8px', fontSize: '12px' }}>
+                          TI: {Math.round(u.trust_index)}
+                        </div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px', textTransform: 'uppercase' }}>
+                          {u.verification_status}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+              </div>
+            </div>
+
           </div>
         )}
 

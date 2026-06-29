@@ -132,3 +132,51 @@ def get_all_antifraud_logs(
         "details": l.details,
         "created_at": l.created_at
     } for l in logs]
+
+@router.get("/admin/users")
+def get_all_users(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Доступ запрещен. Требуется роль Admin.")
+    users = db.query(User).order_by(User.id.desc()).all()
+    return [{
+        "id": u.id,
+        "telegram_id": u.telegram_id,
+        "role": u.role,
+        "name": u.name,
+        "phone": u.phone,
+        "region": u.region,
+        "trust_index": u.trust_index,
+        "verification_status": u.verification_status
+    } for u in users]
+
+class AdjustTrustInput(BaseModel):
+    user_id: int
+    change: float
+    reason: str
+
+@router.post("/admin/users/adjust-trust")
+def adjust_user_trust(
+    input_data: AdjustTrustInput,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Доступ запрещен. Требуется роль Admin.")
+    user = db.query(User).filter(User.id == input_data.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    user.trust_index = max(0.0, min(100.0, user.trust_index + input_data.change))
+    
+    event = TrustEvent(
+        user_id=user.id,
+        score_change=input_data.change,
+        factor="admin_adjustment",
+        description=input_data.reason
+    )
+    db.add(event)
+    db.commit()
+    db.refresh(user)
+    return {"status": "success", "new_trust_index": user.trust_index}
