@@ -312,6 +312,20 @@ function App() {
   const [tonWalletAddress, setTonWalletAddress] = useState('');
   const [tonConnectUI, setTonConnectUI] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('card'); // card, stars, ton
+  const [toast, setToast] = useState(null); // { message: '', type: 'success' | 'warning' | 'danger' | 'info' }
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  const showToast = (message, type = 'info') => {
+    setToast({ message, type });
+  };
+
 
   useEffect(() => {
     let uiInstance = null;
@@ -614,11 +628,11 @@ function App() {
         localStorage.setItem('token', data.access_token);
         setToken(data.access_token);
         if (data.fraud_flags_triggered) {
-          alert(`Внимание: сработали триггеры антифрода! ${data.fraud_details?.[0]?.details || ''}`);
+          showToast(`Внимание: сработали триггеры антифрода! ${data.fraud_details?.[0]?.details || ''}`, 'warning');
         }
       } else {
         // Registration succeeded but no token — show error
-        alert(language === 'ru' ? 'Ошибка регистрации. Попробуйте снова.' : 'Registration error. Please try again.');
+        showToast(language === 'ru' ? 'Ошибка регистрации. Попробуйте снова.' : 'Registration error. Please try again.', 'danger');
       }
     } catch (err) {
       console.log("Registering inside client database simulation.");
@@ -661,7 +675,12 @@ function App() {
       const data = await res.json();
       if (Array.isArray(data)) setRecommendations(data);
     } catch (e) {
-      alert("AI-рекомендации сгенерированы по локальной формуле (Gemini API offline)");
+      showToast(
+        language === 'ru'
+          ? "AI-рекомендации сгенерированы по локальной формуле (Gemini API offline)"
+          : "AI Recommendations generated via local formula (Gemini API offline)",
+        'info'
+      );
     } finally {
       setLoading(false);
     }
@@ -779,15 +798,17 @@ function App() {
       });
       const data = await res.json();
       if (data.is_bypass_attempt) {
-        alert(TRANSLATIONS[language].alert_bypass_warning);
+        showToast(TRANSLATIONS[language].alert_bypass_warning, 'danger');
         setUser(prev => ({ ...prev, trust_index: data.trust_index }));
       }
     } catch(err) {
       const phonePattern = /\b\d{9,12}\b|@\w+|email/i;
       if (phonePattern.test(msgText)) {
-        alert(language === 'ru' 
-          ? "🛡️ AntiFraud Core Warning: Обнаружен номер телефона или контактная информация до оплаты сделки! Ваш Trust Index оштрафован на -30 очков за обход комиссии."
-          : "🛡️ AntiFraud Core Warning: Phone number or contact info detected before payment! Your Trust Index has been penalized -30 points."
+        showToast(
+          language === 'ru' 
+            ? "🛡️ AntiFraud Core Warning: Обнаружен номер телефона или контактная информация до оплаты сделки! Ваш Trust Index оштрафован на -30 очков за обход комиссии."
+            : "🛡️ AntiFraud Core Warning: Phone number or contact info detected before payment! Your Trust Index has been penalized -30 points.",
+          'danger'
         );
         setUser(prev => ({ ...prev, trust_index: Math.max(0.0, prev.trust_index - 30.0) }));
         
@@ -831,6 +852,17 @@ function App() {
 
   return (
     <div className="app-container">
+      {toast && (
+        <div className="toast-container">
+          <div className={`toast toast-${toast.type}`}>
+            {toast.type === 'success' && <Check size={18} className="text-green" />}
+            {toast.type === 'warning' && <AlertTriangle size={18} className="text-gold" />}
+            {toast.type === 'danger' && <AlertTriangle size={18} className="text-red" />}
+            {toast.type === 'info' && <Shield size={18} className="text-blue" />}
+            <span>{toast.message}</span>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <header className="header">
         <div className="logo">
@@ -1173,12 +1205,12 @@ function App() {
                     if (res.ok) {
                       const data = await res.json();
                       setUser(data);
-                      alert(TRANSLATIONS[language].alert_verification_success);
+                      showToast(TRANSLATIONS[language].alert_verification_success, 'success');
                     } else {
                       throw new Error();
                     }
                   } catch(err) {
-                    alert(TRANSLATIONS[language].alert_verification_success);
+                    showToast(TRANSLATIONS[language].alert_verification_success, 'success');
                     setUser(prev => ({ 
                       ...prev, 
                       verification_status: "verified",
@@ -1621,7 +1653,7 @@ function App() {
                       onClick={async () => {
                         if (paymentMethod === 'ton') {
                           if (!tonWalletAddress) {
-                            alert(TRANSLATIONS[language].alert_wallet_connect_first);
+                            showToast(TRANSLATIONS[language].alert_wallet_connect_first, 'warning');
                             return;
                           }
                           try {
@@ -1662,7 +1694,7 @@ function App() {
                             });
                             
                             if (confirmRes.ok) {
-                              alert(TRANSLATIONS[language].alert_tx_confirmed);
+                              showToast(TRANSLATIONS[language].alert_tx_confirmed, 'success');
                               fetchDeals();
                               loadDealDetail(activeDealId);
                             } else {
@@ -1670,7 +1702,7 @@ function App() {
                             }
                           } catch (err) {
                             console.error(err);
-                            alert("TON transaction error: " + err.message);
+                            showToast("TON transaction error: " + err.message, 'danger');
                           }
                         } else {
                           executeDealAction('pay-escrow');
