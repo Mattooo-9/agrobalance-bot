@@ -118,6 +118,8 @@ async def process_help(callback_query: types.CallbackQuery):
 
 async def main():
     logger.info("Starting Telegram Bot...")
+    logger.info("Clearing active webhooks...")
+    await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 if __name__ == "__main__":

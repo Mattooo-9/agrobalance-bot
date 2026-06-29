@@ -1658,6 +1658,8 @@ async def main(start_http=True):
     while True:
         try:
             log.info("🔄 Запускаем polling Telegram...")
+            log.info("🧹 Принудительно очищаем сторонние вебхуки перед стартом...")
+            await bot.delete_webhook(drop_pending_updates=True)
             await dp.start_polling(
                 bot,
                 allowed_updates=["message", "callback_query"],
