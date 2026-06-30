@@ -456,7 +456,7 @@ def kb_roles() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 def kb_regions() -> InlineKeyboardMarkup:
-    regions = ["Южный", "Центральный", "Поволжский", "Сибирский", "Уральский", "Северо-Западный"]
+    regions = ["Европа", "СНГ", "Азия", "Северная Америка", "Латинская Америка", "Ближний Восток"]
     rows = [[InlineKeyboardButton(text=r, callback_data=f"region_{r}")] for r in regions]
     return InlineKeyboardMarkup(inline_keyboard=rows)
 

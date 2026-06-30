@@ -121,10 +121,12 @@ const TRANSLATIONS = {
       Agronomist: "Консалтинг и аудит",
     },
     regions: {
-      "Южный": "Южный округ",
-      "Центральный": "Центральный округ",
-      "Поволжье": "Поволжский округ",
-      "Сибирь": "Сибирский округ"
+      "Европа": "Европа",
+      "СНГ": "СНГ",
+      "Азия": "Азия и Океания",
+      "Северная Америка": "Северная Америка",
+      "Латинская Америка": "Латинская Америка",
+      "Ближний Восток": "Ближний Восток и Африка"
     },
     tiers: {
       gold: { name: "🏆 Золотой Партнер", desc: "Комиссия 1% • Скидка 10% на складах • Макс. приоритет" },
@@ -261,10 +263,12 @@ const TRANSLATIONS = {
       Agronomist: "Consulting & audits",
     },
     regions: {
-      "Южный": "Southern District",
-      "Центральный": "Central District",
-      "Поволжье": "Volga District",
-      "Сибирь": "Siberian District"
+      "Европа": "Europe",
+      "СНГ": "CIS",
+      "Азия": "Asia & Pacific",
+      "Северная Америка": "North America",
+      "Латинская Америка": "Latin America",
+      "Ближний Восток": "Middle East & Africa"
     },
     tiers: {
       gold: { name: "🏆 Gold Partner", desc: "1% fee • 10% storage discount • Max priority" },
@@ -365,37 +369,37 @@ function App() {
   const [regStep, setRegStep] = useState(1);
   const [regRole, setRegRole] = useState('Farmer'); // Farmer, Buyer, Carrier, Warehouse, Processor, Supplier, Agronomist
   const [regForm, setRegForm] = useState({
-    name: 'Иван Петров',
-    phone: '+79991234567',
-    region: 'Южный',
-    telegram_id: '8017348770',
+    name: '',
+    phone: '',
+    region: '',
+    telegram_id: '',
     
     // Farmer
-    latitude: 45.0354,
-    longitude: 38.9750,
-    area: 120.0,
-    crop: 'Пшеница',
-    expected_yield: 480.0,
-    photo_url: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b',
-    photo_hash: 'ph_hash_987123',
+    latitude: null,
+    longitude: null,
+    area: null,
+    crop: '',
+    expected_yield: null,
+    photo_url: '',
+    photo_hash: '',
     
     // Buyer
-    needed_crops: 'Пшеница, Ячмень',
-    desired_volume: 500.0,
-    price_range: '13000-14000',
-    payment_terms: 'Предоплата 30%, расчет по весам',
-    delivery_terms: 'Самовывоз',
+    needed_crops: '',
+    desired_volume: null,
+    price_range: '',
+    payment_terms: '',
+    delivery_terms: '',
     
     // Carrier
-    vehicle_type: 'Зерновоз Scania',
-    capacity: 35.0,
-    tariff_per_km: 55.0,
-    routes: 'Южный, Центральный',
+    vehicle_type: '',
+    capacity: null,
+    tariff_per_km: null,
+    routes: '',
     
     // Warehouse
-    capacity_tons: 3000.0,
-    storage_conditions: 'Вентилируемый склад, влажность 13%',
-    storage_price: 180.0
+    capacity_tons: null,
+    storage_conditions: '',
+    storage_price: null
   });
 
   // Client-side mocks in case API is offline
@@ -1222,8 +1226,10 @@ function App() {
                       className="form-control" 
                       value={regForm.region} 
                       onChange={e => setRegForm({...regForm, region: e.target.value})}
+                      required
                     >
-                      {["Южный", "Центральный", "Поволжье", "Сибирь"]
+                      <option value="">-- {language === 'ru' ? 'Выберите регион' : 'Select Region'} --</option>
+                      {Object.keys(TRANSLATIONS[language].regions)
                         .sort((a, b) => TRANSLATIONS[language].regions[a].localeCompare(TRANSLATIONS[language].regions[b]))
                         .map(reg => (
                           <option key={reg} value={reg}>{TRANSLATIONS[language].regions[reg]}</option>

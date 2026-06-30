@@ -110,7 +110,7 @@ async def lifespan(app: FastAPI):
                 role="Admin",
                 name="Администратор",
                 phone="+79998887766",
-                region="Центральный",
+                region="СНГ",
                 trust_index=100.0,
                 verification_status="verified"
             )
@@ -119,7 +119,7 @@ async def lifespan(app: FastAPI):
                 role="Buyer",
                 name="АгроХолдинг Восток",
                 phone="+79001112233",
-                region="Южный",
+                region="СНГ",
                 needed_crops="Пшеница,Кукуруза",
                 desired_volume=1000.0,
                 price_range="12000-15000",
@@ -130,11 +130,11 @@ async def lifespan(app: FastAPI):
                 role="Carrier",
                 name="ИП Иванов (Логистика)",
                 phone="+79112223344",
-                region="Южный",
+                region="СНГ",
                 vehicle_type="Зерновоз КАМАЗ",
                 capacity=25.0,
                 tariff_per_km=45.0,
-                routes="Южный, Центральный",
+                routes="СНГ",
                 trust_index=90.0,
                 verification_status="verified"
             )
@@ -142,7 +142,7 @@ async def lifespan(app: FastAPI):
                 role="Warehouse",
                 name="Элеватор 'Золотой Колос'",
                 phone="+79223334455",
-                region="Южный",
+                region="СНГ",
                 capacity_tons=5000.0,
                 storage_conditions="Сухой силос, вентиляция",
                 storage_price=150.0,
@@ -152,12 +152,12 @@ async def lifespan(app: FastAPI):
             )
             db.add_all([buyer, carrier, warehouse])
             wheat_signal = MarketSignal(
-                crop="Пшеница", region="Южный",
+                crop="Пшеница", region="СНГ",
                 price_per_unit=14500.0, demand_volume=5000.0, supply_volume=3500.0,
                 deficit_score=4.2, oversupply_score=0.2, weather_risk=1.5
             )
             corn_signal = MarketSignal(
-                crop="Кукуруза", region="Южный",
+                crop="Кукуруза", region="СНГ",
                 price_per_unit=11000.0, demand_volume=2000.0, supply_volume=2500.0,
                 deficit_score=1.8, oversupply_score=3.5, weather_risk=2.0
             )
@@ -165,13 +165,13 @@ async def lifespan(app: FastAPI):
             # Also seed some market offers/requests for immediate display
             seed_farmer = User(
                 role="Farmer", name="КФХ Рассвет",
-                phone="+79334445566", region="Южный",
+                phone="+79334445566", region="СНГ",
                 crop="Кукуруза", area=200.0, expected_yield=600.0,
                 trust_index=78.0, verification_status="verified"
             )
             seed_farmer2 = User(
                 role="Farmer", name="Фермер ИП Сидоров",
-                phone="+79445556677", region="Южный",
+                phone="+79445556677", region="СНГ",
                 crop="Пшеница", area=150.0, expected_yield=480.0,
                 trust_index=82.0, verification_status="verified"
             )
@@ -180,10 +180,10 @@ async def lifespan(app: FastAPI):
             db.refresh(seed_farmer)
             db.refresh(seed_farmer2)
             db.refresh(buyer)
-            offer1 = MarketOffer(seller_id=seed_farmer2.id, crop="Пшеница", volume=150, price_per_unit=14000, region="Южный")
-            offer2 = MarketOffer(seller_id=seed_farmer.id, crop="Кукуруза", volume=300, price_per_unit=11200, region="Южный")
-            req1 = MarketRequest(buyer_id=buyer.id, crop="Пшеница", volume=500, price_per_unit=14500, region="Южный")
-            req2 = MarketRequest(buyer_id=buyer.id, crop="Ячмень", volume=200, price_per_unit=12000, region="Южный")
+            offer1 = MarketOffer(seller_id=seed_farmer2.id, crop="Пшеница", volume=150, price_per_unit=14000, region="СНГ")
+            offer2 = MarketOffer(seller_id=seed_farmer.id, crop="Кукуруза", volume=300, price_per_unit=11200, region="СНГ")
+            req1 = MarketRequest(buyer_id=buyer.id, crop="Пшеница", volume=500, price_per_unit=14500, region="СНГ")
+            req2 = MarketRequest(buyer_id=buyer.id, crop="Ячмень", volume=200, price_per_unit=12000, region="СНГ")
             db.add_all([offer1, offer2, req1, req2])
             db.commit()
             print("[Startup] ✅ Database initialized and seeded successfully.")
