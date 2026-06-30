@@ -323,8 +323,14 @@ def trust_bar(score: float) -> str:
     emoji = "🟢" if score >= 80 else ("🟡" if score >= 50 else "🔴")
     return f"{emoji} [{bar}] {score:.0f}/100"
 
-def format_money(amount: float) -> str:
-    return f"{amount:,.0f} ₽".replace(",", " ")
+def format_money(amount: float, region: str = None) -> str:
+    macro_region = region.split(":")[0].strip() if region and ":" in region else (region or "СНГ")
+    if macro_region == "Европа":
+        return f"{amount:,.0f} €".replace(",", " ")
+    elif macro_region == "СНГ":
+        return f"{amount:,.0f} ₽".replace(",", " ")
+    else:
+        return f"{amount:,.0f} $".replace(",", " ")
 
 # ─── BOT ──────────────────────────────────────────────────────────────────────
 from aiogram import Bot, Dispatcher, F
@@ -400,6 +406,7 @@ class Reg(StatesGroup):
     name          = State()
     phone         = State()
     region        = State()
+    country       = State()
     crop          = State()
     area          = State()
     expected_yield = State()
@@ -458,6 +465,27 @@ def kb_roles() -> InlineKeyboardMarkup:
 def kb_regions() -> InlineKeyboardMarkup:
     regions = ["Европа", "СНГ", "Азия", "Северная Америка", "Латинская Америка", "Ближний Восток"]
     rows = [[InlineKeyboardButton(text=r, callback_data=f"region_{r}")] for r in regions]
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+COUNTRIES_BY_REGION = {
+    "Европа": ["Германия", "Франция", "Италия", "Испания", "Польша", "Нидерланды", "Великобритания", "Румыния"],
+    "СНГ": ["Россия", "Казахстан", "Беларусь", "Узбекистан", "Азербайджан", "Кыргызстан", "Армения", "Таджикистан", "Молдова"],
+    "Азия": ["Китай", "Индия", "Турция", "Иран", "Вьетнам", "Таиланд", "Пакистан"],
+    "Северная Америка": ["США", "Канада", "Мексика"],
+    "Латинская Америка": ["Бразилия", "Аргентина", "Колумбия", "Чили", "Перу"],
+    "Ближний Восток": ["ОАЭ", "Саудовская Аравия", "Египет", "ЮАР", "Нигерия", "Кения"]
+}
+
+def kb_countries(region: str) -> InlineKeyboardMarkup:
+    countries = COUNTRIES_BY_REGION.get(region, ["Другая страна"])
+    rows = []
+    for i in range(0, len(countries), 2):
+        row = [InlineKeyboardButton(text=countries[i], callback_data=f"country_{countries[i]}")]
+        if i+1 < len(countries):
+            row.append(InlineKeyboardButton(text=countries[i+1], callback_data=f"country_{countries[i+1]}"))
+        rows.append(row)
+    if "Другая страна" not in countries:
+        rows.append([InlineKeyboardButton(text="Другая страна", callback_data="country_Другая страна")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 def kb_phone() -> ReplyKeyboardMarkup:
@@ -603,27 +631,39 @@ async def _process_phone(msg: Message, state: FSMContext, phone: str):
 async def reg_region(cb: CallbackQuery, state: FSMContext):
     region = cb.data.replace("region_", "")
     await state.update_data(region=region)
+    await cb.message.edit_text(
+        f"✅ Регион: *{region}*\n\nВыберите вашу страну или территорию:",
+        reply_markup=kb_countries(region)
+    )
+    await state.set_state(Reg.country)
+
+@dp.callback_query(F.data.startswith("country_"), Reg.country)
+async def reg_country(cb: CallbackQuery, state: FSMContext):
+    country = cb.data.replace("country_", "")
     data = await state.get_data()
+    region = data.get("region", "СНГ")
+    combined_region = f"{region}: {country}"
+    await state.update_data(region=combined_region)
     role = data.get("role", "Farmer")
 
     if role == "Farmer":
         await cb.message.edit_text(
-            f"✅ Регион: *{region}*\n\n*Шаг 5/5:* Введите основную выращиваемую культуру\n_(пример: Пшеница 3 класс)_:"
+            f"✅ Регион: *{combined_region}*\n\n*Шаг 5/5:* Введите основную выращиваемую культуру\n_(пример: Пшеница 3 класс)_:"
         )
         await state.set_state(Reg.crop)
     elif role == "Buyer":
         await cb.message.edit_text(
-            f"✅ Регион: *{region}*\n\n*Шаг 5/5:* Какие культуры вас интересуют?\n_(пример: Пшеница, Кукуруза)_:"
+            f"✅ Регион: *{combined_region}*\n\n*Шаг 5/5:* Какие культуры вас интересуют?\n_(пример: Пшеница, Кукуруза)_:"
         )
         await state.set_state(Reg.needed_crops)
     elif role == "Carrier":
         await cb.message.edit_text(
-            f"✅ Регион: *{region}*\n\n*Шаг 5/5:* Тип транспорта и грузоподъёмность\n_(пример: Зерновоз КАМАЗ, 25 тонн)_:"
+            f"✅ Регион: *{combined_region}*\n\n*Шаг 5/5:* Тип транспорта и грузоподъёмность\n_(пример: Зерновоз КАМАЗ, 25 тонн)_:"
         )
         await state.set_state(Reg.vehicle_type)
     elif role == "Warehouse":
         await cb.message.edit_text(
-            f"✅ Регион: *{region}*\n\n*Шаг 5/5:* Вместимость элеватора (в тоннах):"
+            f"✅ Регион: *{combined_region}*\n\n*Шаг 5/5:* Вместимость элеватора (в тоннах):"
         )
         await state.set_state(Reg.capacity_tons)
     else:
@@ -913,20 +953,23 @@ async def cb_ai_recs(cb: CallbackQuery):
 async def cb_market(cb: CallbackQuery):
     conn = get_db()
     offers   = conn.execute(
-        "SELECT o.*, u.name as seller_name, u.trust_index FROM market_offers o JOIN users u ON o.seller_id=u.id WHERE o.is_active=1 ORDER BY o.created_at DESC LIMIT 5"
+        "SELECT o.*, u.name as seller_name, u.role as seller_role, u.trust_index FROM market_offers o JOIN users u ON o.seller_id=u.id WHERE o.is_active=1 ORDER BY o.created_at DESC LIMIT 5"
     ).fetchall()
     requests = conn.execute(
-        "SELECT r.*, u.name as buyer_name, u.trust_index FROM market_requests r JOIN users u ON r.buyer_id=u.id WHERE r.is_active=1 ORDER BY r.created_at DESC LIMIT 5"
+        "SELECT r.*, u.name as buyer_name, u.role as buyer_role, u.trust_index FROM market_requests r JOIN users u ON r.buyer_id=u.id WHERE r.is_active=1 ORDER BY r.created_at DESC LIMIT 5"
     ).fetchall()
     conn.close()
 
     text = "📊 *Рынок AgroBalance*\n\n"
 
+    role_map_ru = {"Farmer":"Фермер","Buyer":"Покупатель","Carrier":"Перевозчик","Warehouse":"Элеватор","Processor":"Переработчик","Supplier":"Поставщик","Agronomist":"Агроэксперт"}
+
     if offers:
         text += "🌾 *Продают сейчас:*\n"
         for o in offers:
             trust_emoji = "🟢" if o["trust_index"] >= 80 else ("🟡" if o["trust_index"] >= 50 else "🔴")
-            text += f"{trust_emoji} {o['crop']} — {o['volume']:.0f}т по {format_money(o['price_per_unit'])}/т\n  _от {o['seller_name']}, {o['region']}_\n"
+            role_label = role_map_ru.get(o["seller_role"], o["seller_role"])
+            text += f"{trust_emoji} {o['crop']} — {o['volume']:.0f}т по {format_money(o['price_per_unit'], o['region'])}/т\n  _от {role_label} #{o['seller_id']}, {o['region']}_\n"
     else:
         text += "🌾 *Предложений пока нет.*\n"
 
@@ -936,7 +979,8 @@ async def cb_market(cb: CallbackQuery):
         text += "🛒 *Покупают сейчас:*\n"
         for r in requests:
             trust_emoji = "🟢" if r["trust_index"] >= 80 else ("🟡" if r["trust_index"] >= 50 else "🔴")
-            text += f"{trust_emoji} {r['crop']} — {r['volume']:.0f}т по {format_money(r['price_per_unit'])}/т\n  _от {r['buyer_name']}, {r['region']}_\n"
+            role_label = role_map_ru.get(r["buyer_role"], r["buyer_role"])
+            text += f"{trust_emoji} {r['crop']} — {r['volume']:.0f}т по {format_money(r['price_per_unit'], r['region'])}/т\n  _от {role_label} #{r['buyer_id']}, {r['region']}_\n"
     else:
         text += "🛒 *Запросов пока нет.*\n"
 
@@ -1301,9 +1345,9 @@ async def cb_deal_complete(cb: CallbackQuery):
             await bot.send_message(
                 seller_tg["telegram_id"],
                 f"✅ *Сделка #{deal_id} завершена!*\n\n"
-                f"💵 Сумма сделки: {format_money(total)}\n"
-                f"📌 Комиссия платформы (1%): {format_money(fee)}\n"
-                f"✅ *Вы получаете: {format_money(net_sell)}*\n\n"
+                f"💵 Сумма сделки: {format_money(total, deal['region'])}\n"
+                f"📌 Комиссия платформы (1%): {format_money(fee, deal['region'])}\n"
+                f"✅ *Вы получаете: {format_money(net_sell, deal['region'])}*\n\n"
                 f"Trust Index вырос за успешную сделку! 🚀",
                 reply_markup=kb_back_main()
             )
@@ -1315,9 +1359,9 @@ async def cb_deal_complete(cb: CallbackQuery):
 
     await cb.message.edit_text(
         f"🎉 *Сделка #{deal_id} успешно завершена!*\n\n"
-        f"💵 Сумма: {format_money(total)}\n"
-        f"📌 Комиссия платформы (1%): {format_money(fee)}\n"
-        f"Продавец получил: {format_money(net_sell)}\n\n"
+        f"💵 Сумма: {format_money(total, deal['region'])}\n"
+        f"📌 Комиссия платформы (1%): {format_money(fee, deal['region'])}\n"
+        f"Продавец получил: {format_money(net_sell, deal['region'])}\n\n"
         f"Ваш Trust Index повышен за надёжную сделку! 🏆",
         reply_markup=kb_back_main()
     )
@@ -1401,7 +1445,7 @@ async def cb_my_deals(cb: CallbackQuery):
     for d in deals:
         icon = status_icons.get(d["status"], d["status"])
         other = d["buyer_name"] if user["id"] == d["seller_id"] else d["seller_name"]
-        text += f"#{d['id']} · {d['crop']} {d['volume']:.0f}т · {format_money(d['total_price'])}\n{icon} · {other}\n\n"
+        text += f"#{d['id']} · {d['crop']} {d['volume']:.0f}т · {format_money(d['total_price'], d['region'])}\n{icon} · {other}\n\n"
         if d["status"] not in ("completed","cancelled"):
             role_here = "Farmer" if user["id"] == d["seller_id"] else "Buyer"
             rows.append([InlineKeyboardButton(
@@ -1431,10 +1475,10 @@ async def cb_deal_detail(cb: CallbackQuery):
         f"🤝 *Сделка #{deal_id}*\n\n"
         f"Культура: *{deal['crop']}*\n"
         f"Объём: *{deal['volume']:.0f} тонн*\n"
-        f"Цена: *{format_money(deal['price_per_unit'])}/т*\n"
-        f"💵 Сумма: *{format_money(total)}*\n"
-        f"📌 Комиссия AgroBalance (1%): *{format_money(fee)}*\n"
-        f"✅ Продавец получит: *{format_money(total - fee)}*\n\n"
+        f"Цена: *{format_money(deal['price_per_unit'], deal['region'])}/т*\n"
+        f"💵 Сумма: *{format_money(total, deal['region'])}*\n"
+        f"📌 Комиссия AgroBalance (1%): *{format_money(fee, deal['region'])}*\n"
+        f"✅ Продавец получит: *{format_money(total - fee, deal['region'])}*\n\n"
         f"Статус: *{deal['status']}*",
         reply_markup=kb_deal_actions(deal_id, deal["status"], role_here)
     )

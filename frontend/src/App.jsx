@@ -128,6 +128,21 @@ const TRANSLATIONS = {
       "Латинская Америка": "Латинская Америка",
       "Ближний Восток": "Ближний Восток и Африка"
     },
+    countries: {
+      "Германия": "Германия", "Франция": "Франция", "Италия": "Италия", "Испания": "Испания",
+      "Польша": "Польша", "Нидерланды": "Нидерланды", "Великобритания": "Великобритания",
+      "Румыния": "Румыния", "Другая страна": "Другая страна",
+      "Россия": "Россия", "Казахстан": "Казахстан", "Беларусь": "Беларусь", "Узбекистан": "Узбекистан",
+      "Азербайджан": "Азербайджан", "Кыргызстан": "Кыргызстан", "Армения": "Армения",
+      "Таджикистан": "Таджикистан", "Молдова": "Молдова",
+      "Китай": "Китай", "Индия": "Индия", "Турция": "Турция", "Иран": "Иран",
+      "Вьетнам": "Вьетнам", "Таиланд": "Таиланд", "Пакистан": "Пакистан",
+      "США": "США", "Канада": "Канада", "Мексика": "Мексика",
+      "Бразилия": "Бразилия", "Аргентина": "Аргентина", "Колумбия": "Колумбия",
+      "Чили": "Чили", "Перу": "Перу",
+      "ОАЭ": "ОАЭ", "Саудовская Аравия": "Саудовская Аравия", "Египет": "Египет",
+      "ЮАР": "ЮАР", "Нигерия": "Нигерия", "Кения": "Кения"
+    },
     tiers: {
       gold: { name: "🏆 Золотой Партнер", desc: "Комиссия 1% • Скидка 10% на складах • Макс. приоритет" },
       silver: { name: "🥈 Серебряный Партнер", desc: "Повышенные лимиты • Приоритетный подбор транспорта" },
@@ -270,6 +285,21 @@ const TRANSLATIONS = {
       "Латинская Америка": "Latin America",
       "Ближний Восток": "Middle East & Africa"
     },
+    countries: {
+      "Германия": "Germany", "Франция": "France", "Италия": "Italy", "Испания": "Spain",
+      "Польша": "Poland", "Нидерланды": "Netherlands", "Великобритания": "United Kingdom",
+      "Румыния": "Romania", "Другая страна": "Other Country",
+      "Россия": "Russia", "Казахстан": "Kazakhstan", "Беларусь": "Belarus", "Узбекистан": "Uzbekistan",
+      "Азербайджан": "Azerbaijan", "Кыргызстан": "Kyrgyzstan", "Армения": "Armenia",
+      "Таджикистан": "Tajikistan", "Молдова": "Moldova",
+      "Китай": "China", "Индия": "India", "Турция": "Turkey", "Иран": "Iran",
+      "Вьетнам": "Vietnam", "Таиланд": "Thailand", "Пакистан": "Pakistan",
+      "США": "USA", "Канада": "Canada", "Мексика": "Mexico",
+      "Бразилия": "Brazil", "Аргентина": "Argentina", "Колумбия": "Colombia",
+      "Чили": "Chile", "Перу": "Peru",
+      "ОАЭ": "UAE", "Саудовская Аравия": "Saudi Arabia", "Египет": "Egypt",
+      "ЮАР": "South Africa", "Нигерия": "Nigeria", "Кения": "Kenya"
+    },
     tiers: {
       gold: { name: "🏆 Gold Partner", desc: "1% fee • 10% storage discount • Max priority" },
       silver: { name: "🥈 Silver Partner", desc: "Increased limits • Transport matchmaking priority" },
@@ -296,12 +326,66 @@ const TRANSLATIONS = {
   }
 };
 
+const COUNTRIES_BY_REGION = {
+  "Европа": ["Германия", "Франция", "Италия", "Испания", "Польша", "Нидерланды", "Великобритания", "Румыния", "Другая страна"],
+  "СНГ": ["Россия", "Казахстан", "Беларусь", "Узбекистан", "Азербайджан", "Кыргызстан", "Армения", "Таджикистан", "Молдова"],
+  "Азия": ["Китай", "Индия", "Турция", "Иран", "Вьетнам", "Таиланд", "Пакистан", "Другая страна"],
+  "Северная Америка": ["США", "Канада", "Мексика"],
+  "Латинская Америка": ["Бразилия", "Аргентина", "Колумбия", "Чили", "Перу"],
+  "Ближний Восток": ["ОАЭ", "Саудовская Аравия", "Египет", "ЮАР", "Нигерия", "Кения"]
+};
+
 function App() {
   const [view, setView] = useState('lang-select'); // lang-select, registration, dashboard, market, recommendations, deal-detail
   const [language, setLanguage] = useState(localStorage.getItem('lang') || 'ru');
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const getCurrency = (region) => {
+    const macroRegion = region && region.includes(':') ? region.split(':')[0].trim() : region;
+    switch (macroRegion) {
+      case 'Европа':
+        return 'EUR';
+      case 'СНГ':
+        return 'RUB';
+      case 'Северная Америка':
+      case 'Латинская Америка':
+      case 'Азия':
+      case 'Ближний Восток':
+        return 'USD';
+      default:
+        return 'USD';
+    }
+  };
+
+  const getCurrencySymbol = (region) => {
+    const code = getCurrency(region);
+    const symbols = {
+      EUR: '€',
+      RUB: language === 'ru' ? 'руб.' : 'RUB',
+      USD: '$'
+    };
+    return symbols[code] || '$';
+  };
+
+  const formatPrice = (amount, region) => {
+    if (amount == null) return '';
+    const symbol = getCurrencySymbol(region);
+    const formattedAmount = Math.round(amount).toLocaleString(language === 'ru' ? 'ru-RU' : 'en-US');
+    return `${formattedAmount} ${symbol}`;
+  };
+
+  const formatRegionAndCountry = (regionStr) => {
+    if (!regionStr) return '—';
+    if (regionStr.includes(':')) {
+      const [reg, country] = regionStr.split(':').map(s => s.trim());
+      const translatedReg = TRANSLATIONS[language].regions[reg] || reg;
+      const translatedCountry = TRANSLATIONS[language].countries?.[country] || country;
+      return `${translatedReg} (${translatedCountry})`;
+    }
+    return TRANSLATIONS[language].regions[regionStr] || regionStr;
+  };
   
   // App States
   const [offers, setOffers] = useState([]);
@@ -373,6 +457,7 @@ function App() {
     phone: '',
     region: '',
     telegram_id: '',
+    country: '',
     
     // Farmer
     latitude: null,
@@ -679,11 +764,12 @@ function App() {
     e.preventDefault();
     document.activeElement.blur();
     setLoading(true);
+    const combinedRegion = regForm.country ? `${regForm.region}: ${regForm.country}` : regForm.region;
     try {
       const res = await fetch(`${API_BASE}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...regForm, role: regRole })
+        body: JSON.stringify({ ...regForm, region: combinedRegion, role: regRole })
       });
       const data = await res.json();
       if (data.access_token) {
@@ -706,7 +792,7 @@ function App() {
         name: regForm.name,
         role: regRole,
         phone: regForm.phone,
-        region: regForm.region,
+        region: combinedRegion,
         trust_index: regRole === 'Farmer' && regForm.expected_yield > 1200 ? 30.0 : 50.0,
         verification_status: "pending",
         crop: regForm.crop,
@@ -1225,7 +1311,7 @@ function App() {
                     <select 
                       className="form-control" 
                       value={regForm.region} 
-                      onChange={e => setRegForm({...regForm, region: e.target.value})}
+                      onChange={e => setRegForm({...regForm, region: e.target.value, country: ''})}
                       required
                     >
                       <option value="">-- {language === 'ru' ? 'Выберите регион' : 'Select Region'} --</option>
@@ -1237,6 +1323,25 @@ function App() {
                       }
                     </select>
                   </div>
+                  {regForm.region && (
+                    <div className="form-group" style={{ marginTop: '12px' }}>
+                      <label className="form-label">{language === 'ru' ? 'Страна / Территория' : 'Country / Territory'}</label>
+                      <select 
+                        className="form-control" 
+                        value={regForm.country} 
+                        onChange={e => setRegForm({...regForm, country: e.target.value})}
+                        required
+                      >
+                        <option value="">-- {language === 'ru' ? 'Выберите страну' : 'Select Country'} --</option>
+                        {(COUNTRIES_BY_REGION[regForm.region] || [])
+                          .sort((a, b) => (TRANSLATIONS[language].countries?.[a] || a).localeCompare(TRANSLATIONS[language].countries?.[b] || b))
+                          .map(c => (
+                            <option key={c} value={c}>{TRANSLATIONS[language].countries?.[c] || c}</option>
+                          ))
+                        }
+                      </select>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
                     <button type="button" className="btn btn-secondary" onClick={() => setRegStep(1)}>{TRANSLATIONS[language].back}</button>
                     <button type="submit" className="btn btn-primary">{TRANSLATIONS[language].register}</button>
@@ -1259,7 +1364,7 @@ function App() {
                     <UserIcon className="text-green" size={20} /> {user.name}
                   </h3>
                   <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    {TRANSLATIONS[language].roles[user.role]} • {TRANSLATIONS[language].regions[user.region] || user.region}
+                    {TRANSLATIONS[language].roles[user.role]} • {formatRegionAndCountry(user.region)}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -1292,13 +1397,13 @@ function App() {
                     <>
                       <div><span style={{ color: 'var(--text-muted)' }}>{language === 'ru' ? 'Транспорт:' : 'Vehicle:'}</span> <b style={{ float: 'right' }}>{user.vehicle_type || '—'}</b></div>
                       <div><span style={{ color: 'var(--text-muted)' }}>{language === 'ru' ? 'Грузоподъемность:' : 'Capacity:'}</span> <b style={{ float: 'right' }}>{user.capacity || 0} {TRANSLATIONS[language].unit_tons}</b></div>
-                      <div style={{ gridColumn: 'span 2' }}><span style={{ color: 'var(--text-muted)' }}>{language === 'ru' ? 'Тариф:' : 'Tariff:'}</span> <b style={{ float: 'right' }}>{user.tariff_per_km || 0} {TRANSLATIONS[language].rubles}/км</b></div>
+                      <div style={{ gridColumn: 'span 2' }}><span style={{ color: 'var(--text-muted)' }}>{language === 'ru' ? 'Тариф:' : 'Tariff:'}</span> <b style={{ float: 'right' }}>{formatPrice(user.tariff_per_km, user.region)}/{language === 'ru' ? 'км' : 'km'}</b></div>
                     </>
                   )}
                   {user.role === 'Warehouse' && (
                     <>
                       <div><span style={{ color: 'var(--text-muted)' }}>{language === 'ru' ? 'Вместимость:' : 'Capacity:'}</span> <b style={{ float: 'right' }}>{user.capacity_tons || 0} {TRANSLATIONS[language].unit_tons}</b></div>
-                      <div><span style={{ color: 'var(--text-muted)' }}>{language === 'ru' ? 'Цена хранения:' : 'Storage Fee:'}</span> <b style={{ float: 'right' }}>{user.storage_price || 0} {TRANSLATIONS[language].rubles}/т</b></div>
+                      <div><span style={{ color: 'var(--text-muted)' }}>{language === 'ru' ? 'Цена хранения:' : 'Storage Fee:'}</span> <b style={{ float: 'right' }}>{formatPrice(user.storage_price, user.region)}/{TRANSLATIONS[language].unit_tons}</b></div>
                     </>
                   )}
                 </div>
@@ -1510,7 +1615,7 @@ function App() {
                     <div key={d.id} className="match-card" onClick={() => loadDealDetail(d.id)} style={{ cursor: 'pointer' }}>
                       <div>
                         <div style={{ fontWeight: '600' }}>{d.crop} — {d.volume} {TRANSLATIONS[language].unit_tons}</div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{d.total_price.toLocaleString()} {TRANSLATIONS[language].rubles}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formatPrice(d.total_price, d.region)}</div>
                       </div>
                       <span className={`trust-index-badge ${d.status === 'completed' ? 'text-green' : 'text-gold'}`}>
                         {(TRANSLATIONS[language].statuses[d.status] || d.status).toUpperCase()}
@@ -1535,8 +1640,8 @@ function App() {
                   <div key={o.id} className="match-card">
                     <div>
                       <div style={{ fontWeight: '600' }}>{o.crop} ({o.volume} {TRANSLATIONS[language].unit_tons})</div>
-                      <div style={{ fontSize: '13px' }}><b>{o.price_per_unit} {TRANSLATIONS[language].rubles}/{TRANSLATIONS[language].unit_tons}</b></div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{o.seller_name}</div>
+                      <div style={{ fontSize: '13px' }}><b>{formatPrice(o.price_per_unit, o.region)}/{TRANSLATIONS[language].unit_tons}</b></div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{o.seller_name} • {formatRegionAndCountry(o.region)}</div>
                     </div>
                     {user && user.role === 'Buyer' && (
                       user.verification_status === 'verified' ? (
@@ -1582,8 +1687,8 @@ function App() {
                   <div key={r.id} className="match-card">
                     <div>
                       <div style={{ fontWeight: '600' }}>{r.crop} ({r.volume} {TRANSLATIONS[language].unit_tons})</div>
-                      <div style={{ fontSize: '13px' }}><b>{r.price_per_unit} {TRANSLATIONS[language].rubles}/{TRANSLATIONS[language].unit_tons}</b></div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{r.buyer_name}</div>
+                      <div style={{ fontSize: '13px' }}><b>{formatPrice(r.price_per_unit, r.region)}/{TRANSLATIONS[language].unit_tons}</b></div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{r.buyer_name} • {formatRegionAndCountry(r.region)}</div>
                     </div>
                     {user && user.role === 'Farmer' && (
                       user.verification_status === 'verified' ? (
@@ -1669,7 +1774,7 @@ function App() {
                       </div>
                       
                       <div className="profit-badge">
-                        +{rec.expected_profit.toLocaleString()} {TRANSLATIONS[language].rubles}
+                        +{formatPrice(rec.expected_profit, user.region)}
                       </div>
                       
                       <div className="metric-grid">
@@ -1737,8 +1842,8 @@ function App() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', marginBottom: '20px' }}>
                 <div><b>{TRANSLATIONS[language].deal_crop}</b> {activeDealData.deal.crop}</div>
                 <div><b>{TRANSLATIONS[language].deal_volume}</b> {activeDealData.deal.volume} {TRANSLATIONS[language].unit_tons}</div>
-                <div><b>{TRANSLATIONS[language].deal_price}</b> {activeDealData.deal.price_per_unit} {TRANSLATIONS[language].rubles}</div>
-                <div><b>{TRANSLATIONS[language].deal_total}</b> {activeDealData.deal.total_price.toLocaleString()} {TRANSLATIONS[language].rubles}</div>
+                <div><b>{TRANSLATIONS[language].deal_price}</b> {formatPrice(activeDealData.deal.price_per_unit, activeDealData.deal.region)}</div>
+                <div><b>{TRANSLATIONS[language].deal_total}</b> {formatPrice(activeDealData.deal.total_price, activeDealData.deal.region)}</div>
                 <div><b>{TRANSLATIONS[language].deal_status}</b> <span className="text-gold" style={{ fontWeight: '700' }}>{(TRANSLATIONS[language].statuses[activeDealData.deal.status] || activeDealData.deal.status).toUpperCase()}</span></div>
               </div>
 
@@ -1750,15 +1855,15 @@ function App() {
                 <div className="amount-calculation">
                   <div className="calc-row">
                     <span>{TRANSLATIONS[language].escrow_total_product}</span>
-                    <span>{activeDealData.deal.total_price.toLocaleString()} {TRANSLATIONS[language].rubles}</span>
+                    <span>{formatPrice(activeDealData.deal.total_price, activeDealData.deal.region)}</span>
                   </div>
                   <div className="calc-row">
                     <span>{TRANSLATIONS[language].escrow_fee}</span>
-                    <span>{(activeDealData.deal.total_price * 0.01).toLocaleString()} {TRANSLATIONS[language].rubles}</span>
+                    <span>{formatPrice(activeDealData.deal.total_price * 0.01, activeDealData.deal.region)}</span>
                   </div>
                   <div className="calc-row total">
                     <span>{TRANSLATIONS[language].escrow_total_pay}</span>
-                    <span>{Math.round(activeDealData.deal.total_price * 1.01).toLocaleString()} {TRANSLATIONS[language].rubles}</span>
+                    <span>{formatPrice(activeDealData.deal.total_price * 1.01, activeDealData.deal.region)}</span>
                   </div>
                 </div>
               </div>
@@ -1813,7 +1918,7 @@ function App() {
                         className="btn" 
                         style={{ flex: 1, padding: '8px', fontSize: '12px', background: paymentMethod === 'card' ? 'var(--primary-green)' : 'rgba(255,255,255,0.05)', color: paymentMethod === 'card' ? 'var(--bg-dark)' : 'var(--text-white)' }}
                       >
-                        {TRANSLATIONS[language].btn_card}
+                        {getCurrency(activeDealData.deal.region) === 'RUB' ? (language === 'ru' ? "Карта МИР 💳" : "MIR Card 💳") : (getCurrency(activeDealData.deal.region) === 'EUR' ? "SEPA Card 💳" : (language === 'ru' ? "Карта Visa/MC 💳" : "Visa/MC Card 💳"))}
                       </button>
                       <button 
                         onClick={() => setPaymentMethod('stars')} 
