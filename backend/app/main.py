@@ -19,7 +19,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         # Allow requests to API documentation or simple check
-        if request.url.path in ["/docs", "/redoc", "/openapi.json"]:
+        if request.url.path in ["/docs", "/redoc", "/openapi.json", "/api/v1/bot/webhook"]:
             return await call_next(request)
         
         ip = request.client.host if request.client else "unknown"
@@ -237,6 +237,18 @@ app.include_router(recommendations.router, prefix="/api/v1/recommendations", tag
 app.include_router(payments.router, prefix="/api/v1/payments", tags=["payments"])
 app.include_router(integrations.router, prefix="/api/v1/integrations", tags=["integrations"])
 app.include_router(market.router, prefix="/api/v1/market", tags=["market"])
+
+
+@app.post("/api/v1/bot/webhook")
+async def bot_webhook(update: dict):
+    from bot.agrobot import bot, dp
+    from aiogram.types import Update
+    try:
+        telegram_update = Update.model_validate(update, context={"bot": bot})
+        await dp.feed_update(bot, telegram_update)
+    except Exception as e:
+        print(f"[Webhook] Error processing update: {e}")
+    return "ok"
 
 
 @app.get("/")

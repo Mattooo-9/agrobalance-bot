@@ -1752,36 +1752,34 @@ async def main(start_http=True):
 
     log.info("✅ Бот запущен. Ожидаем сообщения...")
 
-    # ── Resilient polling loop ─────────────────────────────────────────────────
-    # Retries automatically on any network error, Telegram outage, or geoblock.
-    # Backoff: starts at 5s, doubles each failure up to 60s max.
-    retry_delay = 5
-    max_delay = 60
+    # ── Active Webhook Defense Loop ────────────────────────────────────────────
+    # Forces webhook to point to our Render service, which automatically blocks
+    # any unauthorized long polling (getUpdates) from token-harvesters.
+    render_url = os.environ.get("RENDER_EXTERNAL_URL")
+    if render_url:
+        webhook_url = f"{render_url}/api/v1/bot/webhook"
+    else:
+        webhook_url = "https://agrobalance-backend-image.onrender.com/api/v1/bot/webhook"
+
+    log.info(f"🔄 Инициализация Webhook: {webhook_url}")
+    try:
+        await bot.set_webhook(webhook_url, allowed_updates=["message", "callback_query"], drop_pending_updates=True)
+        log.info("✅ Webhook успешно установлен.")
+    except Exception as e:
+        log.error(f"❌ Ошибка установки Webhook: {e}")
+
     while True:
         try:
-            log.info("🔄 Запускаем polling Telegram...")
-            log.info("🧹 Принудительно очищаем сторонние вебхуки перед стартом...")
-            await bot.delete_webhook(drop_pending_updates=True)
-            await dp.start_polling(
-                bot,
-                allowed_updates=["message", "callback_query"],
-            )
-            # start_polling returned cleanly (graceful stop signal)
-            log.info("⏹️ Polling завершён штатно.")
-            break
+            info = await bot.get_webhook_info()
+            if info.url != webhook_url:
+                log.warning(f"⚠️ Обнаружен сторонний перехват! Возврат вебхука на {webhook_url}...")
+                await bot.set_webhook(webhook_url, allowed_updates=["message", "callback_query"])
         except asyncio.CancelledError:
-            log.info("⏹️ Polling отменён — завершаем работу бота.")
+            log.info("⏹️ Webhook-монитор завершил работу.")
             break
-        except Exception as poll_err:
-            log.error(
-                f"⚠️ Polling упал: {poll_err}. "
-                f"Повторная попытка через {retry_delay}с..."
-            )
-            await asyncio.sleep(retry_delay)
-            retry_delay = min(retry_delay * 2, max_delay)
-        else:
-            # Reset backoff on successful run
-            retry_delay = 5
+        except Exception as e:
+            log.error(f"⚠️ Ошибка в webhook-мониторе: {e}")
+        await asyncio.sleep(15)
 
 
 if __name__ == "__main__":
