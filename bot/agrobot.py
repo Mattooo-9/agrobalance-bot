@@ -407,6 +407,7 @@ class Reg(StatesGroup):
     phone         = State()
     region        = State()
     country       = State()
+    locality      = State()
     crop          = State()
     area          = State()
     expected_yield = State()
@@ -486,6 +487,36 @@ def kb_countries(region: str) -> InlineKeyboardMarkup:
         rows.append(row)
     if "Другая страна" not in countries:
         rows.append([InlineKeyboardButton(text="Другая страна", callback_data="country_Другая страна")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+LOCALITIES_BY_COUNTRY = {
+    "Россия": ["Краснодарский край", "Ростовская область", "Ставропольский край", "Алтайский край", "Воронежская область", "Белгородская область", "Саратовская область"],
+    "Казахстан": ["Акмолинская область", "Костанайская область", "Северо-Казахстанская область", "Алматинская область"],
+    "Беларусь": ["Минская область", "Гродненская область", "Брестская область"],
+    "Узбекистан": ["Ташкентская область", "Самаркандская область", "Ферганская область"],
+    "Германия": ["Bavaria", "Lower Saxony", "North Rhine-Westphalia", "Brandenburg"],
+    "Франция": ["Centre-Val de Loire", "Grand Est", "Nouvelle-Aquitaine", "Hauts-de-France"],
+    "Польша": ["Greater Poland", "Masovian", "Lublin"],
+    "США": ["Iowa", "Illinois", "Nebraska", "Minnesota", "Texas", "Kansas"],
+    "Канада": ["Saskatchewan", "Alberta", "Manitoba", "Ontario"],
+    "Бразилия": ["Mato Grosso", "Paraná", "Rio Grande do Sul", "Goiás"],
+    "Аргентина": ["Buenos Aires", "Córdoba", "Santa Fe"],
+    "Китай": ["Heilongjiang", "Henan", "Shandong", "Anhui"],
+    "Индия": ["Punjab", "Uttar Pradesh", "Haryana", "Madhya Pradesh"],
+    "Турция": ["Central Anatolia", "Aegean", "Marmara"],
+    "Египет": ["Nile Delta", "Upper Egypt"],
+    "ЮАР": ["Free State", "Western Cape", "Gauteng"]
+}
+
+def kb_localities(country: str) -> InlineKeyboardMarkup:
+    localities = LOCALITIES_BY_COUNTRY.get(country, [])
+    rows = []
+    for i in range(0, len(localities), 2):
+        row = [InlineKeyboardButton(text=localities[i], callback_data=f"locality_{localities[i]}")]
+        if i+1 < len(localities):
+            row.append(InlineKeyboardButton(text=localities[i+1], callback_data=f"locality_{localities[i+1]}"))
+        rows.append(row)
+    rows.append([InlineKeyboardButton(text="✍️ Ввести вручную", callback_data="locality_manual")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 def kb_phone() -> ReplyKeyboardMarkup:
@@ -640,35 +671,62 @@ async def reg_region(cb: CallbackQuery, state: FSMContext):
 @dp.callback_query(F.data.startswith("country_"), Reg.country)
 async def reg_country(cb: CallbackQuery, state: FSMContext):
     country = cb.data.replace("country_", "")
+    await state.update_data(country=country)
+    await cb.message.edit_text(
+        f"✅ Страна: *{country}*\n\nВыберите конкретную область/местность или введите вручную:",
+        reply_markup=kb_localities(country)
+    )
+    await state.set_state(Reg.locality)
+
+@dp.callback_query(F.data.startswith("locality_"), Reg.locality)
+async def reg_locality_cb(cb: CallbackQuery, state: FSMContext):
+    locality = cb.data.replace("locality_", "")
+    if locality == "manual":
+        await cb.message.edit_text("✍️ Введите название вашей области/местности вручную:")
+        return
+    await process_locality_selection(cb.message, locality, state)
+
+@dp.message(Reg.locality)
+async def reg_locality_msg(msg: Message, state: FSMContext):
+    await process_locality_selection(msg, msg.text.strip(), state)
+
+async def process_locality_selection(msg_obj, locality: str, state: FSMContext):
     data = await state.get_data()
     region = data.get("region", "СНГ")
-    combined_region = f"{region}: {country}"
+    country = data.get("country", "")
+    combined_region = f"{region}: {country} - {locality}" if locality else f"{region}: {country}"
     await state.update_data(region=combined_region)
     role = data.get("role", "Farmer")
 
+    async def send_msg(text):
+        if isinstance(msg_obj, Message):
+            await msg_obj.answer(text)
+        else:
+            await msg_obj.edit_text(text)
+
     if role == "Farmer":
-        await cb.message.edit_text(
+        await send_msg(
             f"✅ Регион: *{combined_region}*\n\n*Шаг 5/5:* Введите основную выращиваемую культуру\n_(пример: Пшеница 3 класс)_:"
         )
         await state.set_state(Reg.crop)
     elif role == "Buyer":
-        await cb.message.edit_text(
+        await send_msg(
             f"✅ Регион: *{combined_region}*\n\n*Шаг 5/5:* Какие культуры вас интересуют?\n_(пример: Пшеница, Кукуруза)_:"
         )
         await state.set_state(Reg.needed_crops)
     elif role == "Carrier":
-        await cb.message.edit_text(
+        await send_msg(
             f"✅ Регион: *{combined_region}*\n\n*Шаг 5/5:* Тип транспорта и грузоподъёмность\n_(пример: Зерновоз КАМАЗ, 25 тонн)_:"
         )
         await state.set_state(Reg.vehicle_type)
     elif role == "Warehouse":
-        await cb.message.edit_text(
+        await send_msg(
             f"✅ Регион: *{combined_region}*\n\n*Шаг 5/5:* Вместимость элеватора (в тоннах):"
         )
         await state.set_state(Reg.capacity_tons)
     else:
         # Processor / Supplier / Agronomist — skip specific fields
-        await _finish_registration(cb.message, state)
+        await _finish_registration(msg_obj, state)
 
 # Farmer details
 @dp.message(Reg.crop)

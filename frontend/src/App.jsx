@@ -335,6 +335,25 @@ const COUNTRIES_BY_REGION = {
   "Ближний Восток": ["ОАЭ", "Саудовская Аравия", "Египет", "ЮАР", "Нигерия", "Кения"]
 };
 
+const LOCALITIES_BY_COUNTRY = {
+  "Россия": ["Краснодарский край", "Ростовская область", "Ставропольский край", "Алтайский край", "Воронежская область", "Белгородская область", "Саратовская область", "Другой регион"],
+  "Казахстан": ["Акмолинская область", "Костанайская область", "Северо-Казахстанская область", "Алматинская область", "Другой регион"],
+  "Беларусь": ["Минская область", "Гродненская область", "Брестская область", "Другой регион"],
+  "Узбекистан": ["Ташкентская область", "Самаркандская область", "Ферганская область", "Другой регион"],
+  "Германия": ["Bavaria", "Lower Saxony", "North Rhine-Westphalia", "Brandenburg", "Other Region"],
+  "Франция": ["Centre-Val de Loire", "Grand Est", "Nouvelle-Aquitaine", "Hauts-de-France", "Other Region"],
+  "Польша": ["Greater Poland", "Masovian", "Lublin", "Other Region"],
+  "США": ["Iowa", "Illinois", "Nebraska", "Minnesota", "Texas", "Kansas", "Other State"],
+  "Канада": ["Saskatchewan", "Alberta", "Manitoba", "Ontario", "Other Province"],
+  "Бразилия": ["Mato Grosso", "Paraná", "Rio Grande do Sul", "Goiás", "Other State"],
+  "Аргентина": ["Buenos Aires", "Córdoba", "Santa Fe", "Other Province"],
+  "Китай": ["Heilongjiang", "Henan", "Shandong", "Anhui", "Other Province"],
+  "Индия": ["Punjab", "Uttar Pradesh", "Haryana", "Madhya Pradesh", "Other State"],
+  "Турция": ["Central Anatolia", "Aegean", "Marmara", "Other Region"],
+  "Египет": ["Nile Delta", "Upper Egypt", "Other Region"],
+  "ЮАР": ["Free State", "Western Cape", "Gauteng", "Other Province"]
+};
+
 function App() {
   const [view, setView] = useState('lang-select'); // lang-select, registration, dashboard, market, recommendations, deal-detail
   const [language, setLanguage] = useState(localStorage.getItem('lang') || 'ru');
@@ -378,13 +397,35 @@ function App() {
 
   const formatRegionAndCountry = (regionStr) => {
     if (!regionStr) return '—';
+    let regPart = regionStr;
+    let countryPart = '';
+    let localityPart = '';
+    
     if (regionStr.includes(':')) {
-      const [reg, country] = regionStr.split(':').map(s => s.trim());
-      const translatedReg = TRANSLATIONS[language].regions[reg] || reg;
-      const translatedCountry = TRANSLATIONS[language].countries?.[country] || country;
-      return `${translatedReg} (${translatedCountry})`;
+      const parts = regionStr.split(':');
+      regPart = parts[0].trim();
+      const rest = parts[1].trim();
+      if (rest.includes('-')) {
+        const subParts = rest.split('-');
+        countryPart = subParts[0].trim();
+        localityPart = subParts[1].trim();
+      } else {
+        countryPart = rest;
+      }
     }
-    return TRANSLATIONS[language].regions[regionStr] || regionStr;
+    
+    const translatedReg = TRANSLATIONS[language].regions[regPart] || regPart;
+    const translatedCountry = TRANSLATIONS[language].countries?.[countryPart] || countryPart;
+    
+    let result = translatedReg;
+    if (translatedCountry) {
+      result += ` (${translatedCountry}`;
+      if (localityPart) {
+        result += `, ${localityPart}`;
+      }
+      result += ')';
+    }
+    return result;
   };
   
   // App States
@@ -408,6 +449,10 @@ function App() {
   const [adminSelectedUserId, setAdminSelectedUserId] = useState('');
   const [adminTrustChange, setAdminTrustChange] = useState(10);
   const [adminTrustReason, setAdminTrustReason] = useState('Аудит профиля');
+
+  // AI Assistant states
+  const [aiDescInput, setAiDescInput] = useState('');
+  const [parsingAi, setParsingAi] = useState(false);
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -458,6 +503,7 @@ function App() {
     region: '',
     telegram_id: '',
     country: '',
+    locality: '',
     
     // Farmer
     latitude: null,
@@ -760,11 +806,62 @@ function App() {
     }
   };
 
+  const handleParseDescription = async () => {
+    if (!aiDescInput.trim()) {
+      showToast(language === 'ru' ? 'Введите описание деятельности!' : 'Please describe your activity first!', 'warning');
+      return;
+    }
+    setParsingAi(true);
+    try {
+      const res = await fetch(`${API_BASE}/auth/parse-desc`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: aiDescInput })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRegRole(data.role || 'Farmer');
+        setRegForm(prev => ({
+          ...prev,
+          name: data.name || prev.name,
+          phone: data.phone || prev.phone,
+          region: data.region || prev.region,
+          country: data.country || prev.country,
+          locality: data.locality || prev.locality,
+          crop: data.crop || prev.crop,
+          area: data.area || prev.area,
+          expected_yield: data.expected_yield || prev.expected_yield,
+          needed_crops: data.needed_crops || prev.needed_crops,
+          payment_terms: data.payment_terms || prev.payment_terms,
+          delivery_terms: data.delivery_terms || prev.delivery_terms,
+          vehicle_type: data.vehicle_type || prev.vehicle_type,
+          capacity: data.capacity || prev.capacity,
+          tariff_per_km: data.tariff_per_km || prev.tariff_per_km,
+          capacity_tons: data.capacity_tons || prev.capacity_tons,
+          storage_price: data.storage_price || prev.storage_price
+        }));
+        showToast(
+          language === 'ru' 
+            ? '✨ ИИ успешно распознал параметры и заполнил форму!' 
+            : '✨ AI parsed details and pre-filled the form!', 
+          'success'
+        );
+        setRegStep(2);
+      } else {
+        showToast('Error parsing description', 'danger');
+      }
+    } catch (e) {
+      showToast('Connection failed', 'danger');
+    } finally {
+      setParsingAi(false);
+    }
+  };
+
   const handleRegister = async (e) => {
     e.preventDefault();
     document.activeElement.blur();
     setLoading(true);
-    const combinedRegion = regForm.country ? `${regForm.region}: ${regForm.country}` : regForm.region;
+    const combinedRegion = regForm.country ? (regForm.locality ? `${regForm.region}: ${regForm.country} - ${regForm.locality}` : `${regForm.region}: ${regForm.country}`) : regForm.region;
     try {
       const res = await fetch(`${API_BASE}/auth/register`, {
         method: "POST",
@@ -1253,6 +1350,45 @@ function App() {
               <span className={`stepper-step ${regStep >= 2 ? 'active' : ''}`}>2</span>
             </div>
 
+            {/* Smart AI Assistant Console */}
+            <div className="glass-panel" style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(0,230,118,0.2)', marginBottom: '20px', padding: '16px' }}>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: 'var(--primary-green)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                ✨ {language === 'ru' ? 'ИИ Ассистент авторегистрации' : 'AI Autoregistration Assistant'}
+              </h4>
+              <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                {language === 'ru' 
+                  ? 'Опишите ваше хозяйство в свободной форме (например: "Я фермер из Краснодарского края, сею кукурузу на 150 га, тел: +79991234567"), и ИИ автоматически распознает роль, регион, культуру и объёмы!' 
+                  : 'Describe your business in a few words (e.g. "I am a carrier from France, capacity 24 tons, vehicle Volvo truck, phone +336123456"), and the AI will extract all properties instantly!'}
+              </p>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <textarea 
+                  className="form-control" 
+                  style={{ minHeight: '60px', resize: 'vertical', fontSize: '13px', background: 'rgba(0,0,0,0.2)', color: 'var(--text-white)' }}
+                  placeholder={language === 'ru' ? 'Пример: Я покупатель из Франции, куплю 200 тонн пшеницы...' : 'Example: I am farmer from Iowa growing corn on 250 ha...'}
+                  value={aiDescInput}
+                  onChange={e => setAiDescInput(e.target.value)}
+                />
+              </div>
+              <button 
+                type="button" 
+                className="btn btn-primary" 
+                style={{ marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '13px', width: 'auto', padding: '8px 16px' }}
+                onClick={handleParseDescription}
+                disabled={parsingAi}
+              >
+                {parsingAi ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" style={{ marginRight: '6px' }}></span>
+                    {language === 'ru' ? 'Распознавание...' : 'Parsing...'}
+                  </>
+                ) : (
+                  <>
+                    ⚡ {language === 'ru' ? 'Автозаполнение через ИИ' : 'AI Autofill'}
+                  </>
+                )}
+              </button>
+            </div>
+
             <form onSubmit={handleRegister}>
               {regStep === 1 && (
                 <div>
@@ -1329,7 +1465,7 @@ function App() {
                       <select 
                         className="form-control" 
                         value={regForm.country} 
-                        onChange={e => setRegForm({...regForm, country: e.target.value})}
+                        onChange={e => setRegForm({...regForm, country: e.target.value, locality: ''})}
                         required
                       >
                         <option value="">-- {language === 'ru' ? 'Выберите страну' : 'Select Country'} --</option>
@@ -1340,6 +1476,34 @@ function App() {
                           ))
                         }
                       </select>
+                    </div>
+                  )}
+
+                  {regForm.country && (
+                    <div className="form-group" style={{ marginTop: '12px' }}>
+                      <label className="form-label">{language === 'ru' ? 'Регион / Область / Штат' : 'State / Province / Region'}</label>
+                      {LOCALITIES_BY_COUNTRY[regForm.country] ? (
+                        <select
+                          className="form-control"
+                          value={regForm.locality}
+                          onChange={e => setRegForm({...regForm, locality: e.target.value})}
+                          required
+                        >
+                          <option value="">-- {language === 'ru' ? 'Выберите область/местность' : 'Select Locality'} --</option>
+                          {LOCALITIES_BY_COUNTRY[regForm.country].map(loc => (
+                            <option key={loc} value={loc}>{loc}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder={language === 'ru' ? 'Введите вашу область или штат' : 'Enter your state or province'}
+                          value={regForm.locality}
+                          onChange={e => setRegForm({...regForm, locality: e.target.value})}
+                          required
+                        />
+                      )}
                     </div>
                   )}
                   <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>

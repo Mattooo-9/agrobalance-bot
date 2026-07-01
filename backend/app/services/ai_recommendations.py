@@ -18,14 +18,23 @@ def calculate_local_scoring(
                   logistics_score * storage_score * season_score * trust_score - 
                   oversupply_risk - weather_risk - fraud_risk - volatility_risk
     """
-    # Fetch market signals for this crop in this region
+    # Extract macro region and country for fallback matching
+    macro_region = region.split(":")[0].strip() if region and ":" in region else (region or "СНГ")
+    country = ""
+    if region and ":" in region:
+        rem = region.split(":", 1)[1].strip()
+        country = rem.split("-")[0].strip() if "-" in rem else rem
+
+    search_prefix = f"{macro_region}: {country}" if country else macro_region
+
+    # Fetch market signals for this crop in this region (using prefix)
     signal = db.query(MarketSignal).filter(
         MarketSignal.crop == crop,
-        MarketSignal.region == region
+        MarketSignal.region.like(f"{search_prefix}%")
     ).order_by(MarketSignal.created_at.desc()).first()
 
     # Default fallback values
-    price = 15000.0  # default price per ton
+    price = 15000.0  # default price per ton in RUB
     deficit = 1.0    # neutral
     oversupply = 0.0
     weather = 2.0     # out of 10
@@ -36,12 +45,26 @@ def calculate_local_scoring(
         oversupply = signal.oversupply_score
         weather = signal.weather_risk
 
+    # Determine currency and conversion rate
+    currency_code = "USD"
+    conversion_rate = 90.0  # default: 1 USD = 90 RUB
+    
+    if macro_region == "Европа":
+        currency_code = "EUR"
+        conversion_rate = 100.0  # 1 EUR = 100 RUB
+    elif macro_region == "СНГ":
+        currency_code = "RUB"
+        conversion_rate = 1.0  # No conversion
+
+    # Convert prices to local currency
+    local_price = price / conversion_rate
+
     # Calculate expected profit
     total_yield = expected_yield or (area * 4.0 if area else 10.0)
-    expected_revenue = total_yield * price
+    expected_revenue = total_yield * local_price
 
     # 1. expected_profit_score (scaled 1-10)
-    expected_profit_score = min(10.0, max(1.0, expected_revenue / 100000.0))
+    expected_profit_score = min(10.0, max(1.0, (expected_revenue * conversion_rate) / 100000.0))
     
     # 2. demand_deficit_score (scaled 1-5)
     demand_deficit_score = min(5.0, max(1.0, deficit))
@@ -49,21 +72,21 @@ def calculate_local_scoring(
     # 3. buyer_availability_score (scaled 1-5)
     buyers = db.query(User).filter(
         User.role == "Buyer",
-        User.region == region
+        User.region.like(f"{search_prefix}%")
     ).count()
     buyer_availability_score = min(5.0, max(1.0, buyers + 1.0))
     
     # 4. logistics_score (scaled 1-5)
     carriers = db.query(User).filter(
         User.role == "Carrier",
-        User.region == region
+        User.region.like(f"{search_prefix}%")
     ).count()
     logistics_score = min(5.0, max(1.0, carriers + 1.0))
     
     # 5. storage_score (scaled 1-5)
     warehouses = db.query(User).filter(
         User.role == "Warehouse",
-        User.region == region,
+        User.region.like(f"{search_prefix}%"),
         User.availability == True
     ).count()
     storage_score = min(5.0, max(1.0, warehouses + 1.0))
@@ -74,7 +97,7 @@ def calculate_local_scoring(
     # 7. trust_score (scaled 0.5-1.5 based on Trust Index)
     trust_score = 0.5 + (trust_index / 100.0)
 
-    # Risk penalties
+    # Risks
     oversupply_risk = oversupply * 2.0
     weather_risk = weather * 1.5
     fraud_risk = max(0.0, (100.0 - trust_index) / 10.0)
@@ -92,14 +115,15 @@ def calculate_local_scoring(
     
     final_score = base_multipliers - penalties
 
-    # Pull list of matching buyers, carriers, warehouses
-    matching_buyers = db.query(User).filter(User.role == "Buyer", User.region == region).limit(3).all()
-    matching_carriers = db.query(User).filter(User.role == "Carrier", User.region == region).limit(3).all()
-    matching_warehouses = db.query(User).filter(User.role == "Warehouse", User.region == region).limit(3).all()
+    # Pull matching agents using prefix matches
+    matching_buyers = db.query(User).filter(User.role == "Buyer", User.region.like(f"{search_prefix}%")).limit(3).all()
+    matching_carriers = db.query(User).filter(User.role == "Carrier", User.region.like(f"{search_prefix}%")).limit(3).all()
+    matching_warehouses = db.query(User).filter(User.role == "Warehouse", User.region.like(f"{search_prefix}%")).limit(3).all()
 
     return {
         "final_score": round(final_score, 2),
-        "expected_revenue": expected_revenue,
+        "expected_revenue": round(expected_revenue, 2),
+        "currency": currency_code,
         "deficit": deficit,
         "matching_buyers": [{"id": b.id, "name": b.name, "trust": b.trust_index} for b in matching_buyers],
         "matching_carriers": [{"id": c.id, "name": c.name, "tariff": c.tariff_per_km} for c in matching_carriers],
@@ -179,17 +203,18 @@ def generate_ai_recommendations(db: Session, user: User) -> list:
         Trust Index (рейтинг доверия): {trust}/100.
         
         Локальные данные рынка:
-        - Ожидаемая базовая прибыль: {scoring_data['expected_revenue']} руб.
+        - Ожидаемая базовая прибыль: {scoring_data['expected_revenue']} {scoring_data['currency']}
         - Индекс дефицита: {scoring_data['deficit']}
         - Количество покупателей в регионе: {len(scoring_data['matching_buyers'])}
 
         Сформулируйте рекомендации на простом, понятном фермеру языке (без сложной терминологии).
+        ВАЖНО: Все финансовые показатели и прибыли возвращайте строго в указанной валюте: {scoring_data['currency']}.
         Верните ответ строго в формате JSON, представляющем собой массив из 3-х объектов следующей структуры:
         [
           {{
             "scenario": "Safe" | "Profit" | "Aggressive",
             "recommended_crop": "название культуры",
-            "expected_profit": число (ожидаемая прибыль в рублях),
+            "expected_profit": число (ожидаемая прибыль в валюте {scoring_data['currency']}),
             "risk_level": "Low" | "Medium" | "High",
             "recommended_volume": число (объем в тоннах),
             "recommend_sell_by": "строка с описанием сроков",
