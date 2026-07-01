@@ -81,12 +81,14 @@ def init_db():
         state_data      TEXT DEFAULT '{}',
         created_at      TEXT NOT NULL DEFAULT (datetime('now'))
     );
+    """)
     try:
         conn.execute("ALTER TABLE users ADD COLUMN language TEXT DEFAULT 'ru'")
     except Exception:
         pass
     conn.commit()
 
+    c.executescript("""
     CREATE TABLE IF NOT EXISTS deals (
         id              INTEGER PRIMARY KEY AUTOINCREMENT,
         seller_id       INTEGER REFERENCES users(id),
