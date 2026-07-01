@@ -607,6 +607,57 @@ function App() {
     ]);
   };
 
+  const handleSelectLanguage = async (selectedLang) => {
+    setLoading(true);
+    try {
+      if (selectedLang === 'ru' || selectedLang === 'en') {
+        setLanguage(selectedLang);
+        localStorage.setItem('lang', selectedLang);
+        if (token) {
+          fetchProfile();
+        } else {
+          setView('registration');
+        }
+      } else {
+        const res = await fetch(`${API_BASE}/auth/translate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            lang: selectedLang,
+            dictionary: TRANSLATIONS['en']
+          })
+        });
+        if (res.ok) {
+          const translatedDict = await res.json();
+          TRANSLATIONS[selectedLang] = {
+            ...translatedDict,
+            regions: TRANSLATIONS['en'].regions,
+            countries: TRANSLATIONS['en'].countries,
+            roles: TRANSLATIONS['en'].roles
+          };
+          setLanguage(selectedLang);
+          localStorage.setItem('lang', selectedLang);
+          if (token) {
+            fetchProfile();
+          } else {
+            setView('registration');
+          }
+        } else {
+          setLanguage('en');
+          localStorage.setItem('lang', 'en');
+          setView('registration');
+        }
+      }
+    } catch (e) {
+      console.error("Translation error:", e);
+      setLanguage('en');
+      localStorage.setItem('lang', 'en');
+      setView('registration');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const checkAutoLogin = async (tgId) => {
     setLoading(true);
     try {
@@ -1308,35 +1359,17 @@ function App() {
             <p style={{ color: 'var(--text-muted)', marginBottom: '24px', fontSize: '14px' }}>
               {TRANSLATIONS[language].select_lang_desc}
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <button 
-                onClick={() => {
-                  setLanguage('ru');
-                  localStorage.setItem('lang', 'ru');
-                  if (token) {
-                    fetchProfile();
-                  } else {
-                    setView('registration');
-                  }
-                }} 
-                className="btn btn-primary"
-              >
-                Русский 🇷🇺
-              </button>
-              <button 
-                onClick={() => {
-                  setLanguage('en');
-                  localStorage.setItem('lang', 'en');
-                  if (token) {
-                    fetchProfile();
-                  } else {
-                    setView('registration');
-                  }
-                }} 
-                className="btn btn-secondary"
-              >
-                English 🇬🇧
-              </button>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <button onClick={() => handleSelectLanguage('ru')} className="btn btn-primary" style={{ padding: '12px' }}>Русский 🇷🇺</button>
+              <button onClick={() => handleSelectLanguage('en')} className="btn btn-secondary" style={{ padding: '12px' }}>English 🇬🇧</button>
+              <button onClick={() => handleSelectLanguage('es')} className="btn btn-secondary" style={{ padding: '12px' }}>Español 🇪🇸</button>
+              <button onClick={() => handleSelectLanguage('pt')} className="btn btn-secondary" style={{ padding: '12px' }}>Português 🇵🇹</button>
+              <button onClick={() => handleSelectLanguage('ar')} className="btn btn-secondary" style={{ padding: '12px' }}>العربية 🇸🇦</button>
+              <button onClick={() => handleSelectLanguage('tr')} className="btn btn-secondary" style={{ padding: '12px' }}>Türkçe 🇹🇷</button>
+              <button onClick={() => handleSelectLanguage('zh')} className="btn btn-secondary" style={{ padding: '12px' }}>中文 🇨🇳</button>
+              <button onClick={() => handleSelectLanguage('de')} className="btn btn-secondary" style={{ padding: '12px' }}>Deutsch 🇩🇪</button>
+              <button onClick={() => handleSelectLanguage('fr')} className="btn btn-secondary" style={{ padding: '12px' }}>Français 🇫🇷</button>
+              <button onClick={() => handleSelectLanguage('uz')} className="btn btn-secondary" style={{ padding: '12px' }}>Oʻzbekcha 🇺🇿</button>
             </div>
           </div>
         )}
@@ -1357,8 +1390,8 @@ function App() {
               </h4>
               <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.4' }}>
                 {language === 'ru' 
-                  ? 'Опишите ваше хозяйство в свободной форме (например: "Я фермер из Краснодарского края, сею кукурузу на 150 га, тел: +79991234567"), и ИИ автоматически распознает роль, регион, культуру и объёмы!' 
-                  : 'Describe your business in a few words (e.g. "I am a carrier from France, capacity 24 tons, vehicle Volvo truck, phone +336123456"), and the AI will extract all properties instantly!'}
+                  ? 'Опишите ваше хозяйство в свободной форме (например: "Я фермер из Краснодарского края, сею кукурузу на 150 га"), и ИИ автоматически распознает роль, регион, культуру и объёмы!' 
+                  : 'Describe your business in a few words (e.g. "I am a carrier from France, capacity 24 tons, vehicle Volvo truck"), and the AI will extract all properties instantly!'}
               </p>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <textarea 

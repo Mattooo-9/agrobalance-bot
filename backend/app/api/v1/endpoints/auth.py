@@ -13,6 +13,10 @@ from backend.app.core.config import settings
 
 router = APIRouter()
 
+class TranslateRequest(BaseModel):
+    lang: str
+    dictionary: dict
+
 class ParseDescription(BaseModel):
     description: str
 
@@ -155,7 +159,7 @@ def parse_description(payload: ParseDescription):
     return {
         "role": role,
         "name": "ИП " + crop + " Агро" if crop else "Новое Агро-Предприятие",
-        "phone": phone or "+79991112233",
+        "phone": phone or "",
         "region": region,
         "country": country,
         "locality": locality,
@@ -243,3 +247,35 @@ def login_user(login_in: UserLogin, db: Session = Depends(get_db)):
         "role": user.role,
         "trust_index": user.trust_index
     }
+
+@router.post("/translate")
+def translate_dictionary(payload: TranslateRequest):
+    lang = payload.lang
+    dictionary = payload.dictionary
+    if lang in ["en", "ru"]:
+        return dictionary
+    if settings.GEMINI_API_KEY:
+        prompt = f"""
+        Translate the following UI localization JSON dictionary keys from English to: {lang}.
+        Maintain exactly the same keys and JSON structure. Translate only the string values.
+        Return ONLY the translated JSON without any markdown formatting or extra text:
+        {json.dumps(dictionary, ensure_ascii=False)}
+        """
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
+        headers = {"Content-Type": "application/json"}
+        req_payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "responseMimeType": "application/json"
+            }
+        }
+        try:
+            with httpx.Client(timeout=15.0) as client:
+                res = client.post(url, headers=headers, json=req_payload)
+                if res.status_code == 200:
+                    data = res.json()
+                    text = data['candidates'][0]['content']['parts'][0]['text']
+                    return json.loads(text)
+        except Exception as e:
+            print(f"Translation API error: {e}")
+    return dictionary

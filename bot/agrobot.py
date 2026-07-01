@@ -81,6 +81,11 @@ def init_db():
         state_data      TEXT DEFAULT '{}',
         created_at      TEXT NOT NULL DEFAULT (datetime('now'))
     );
+    try:
+        conn.execute("ALTER TABLE users ADD COLUMN language TEXT DEFAULT 'ru'")
+    except Exception:
+        pass
+    conn.commit()
 
     CREATE TABLE IF NOT EXISTS deals (
         id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -332,6 +337,51 @@ def format_money(amount: float, region: str = None) -> str:
     else:
         return f"{amount:,.0f} $".replace(",", " ")
 
+async def translate_bot_text(text: str, target_lang: str) -> str:
+    if not target_lang or target_lang == "ru":
+        return text
+    dictionary = {
+        "ru": {
+            "main_menu": "🏠 Главное меню",
+            "back": "⬅️ Назад",
+            "Farmer": "Фермер",
+            "Buyer": "Покупатель",
+            "Carrier": "Перевозчик",
+            "Warehouse": "Элеватор"
+        },
+        "en": {
+            "main_menu": "🏠 Main Menu",
+            "back": "⬅️ Back",
+            "Farmer": "Farmer",
+            "Buyer": "Buyer",
+            "Carrier": "Carrier",
+            "Warehouse": "Warehouse"
+        }
+    }
+    if target_lang in dictionary and text in dictionary["ru"].values():
+        for k, v in dictionary["ru"].items():
+            if v == text:
+                return dictionary[target_lang][k]
+    if GEMINI_KEY:
+        import httpx
+        prompt = f"Translate the following Telegram bot message from Russian to {target_lang}. Keep formatting, markdown (*, _, `), and emojis exactly the same:\n\n{text}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_KEY}"
+        headers = {"Content-Type": "application/json"}
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}]
+        }
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                res = await client.post(url, headers=headers, json=payload)
+                if res.status_code == 200:
+                    ans = res.json()
+                    translated = ans['candidates'][0]['content']['parts'][0]['text'].strip()
+                    if translated:
+                        return translated
+        except Exception:
+            pass
+    return text
+
 # ─── BOT ──────────────────────────────────────────────────────────────────────
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command, CommandStart
@@ -402,6 +452,7 @@ dp.callback_query.outer_middleware(AntiSpamMiddleware(limit=0.5))
 
 # ─── FSM States ────────────────────────────────────────────────────────────────
 class Reg(StatesGroup):
+    language      = State()
     role          = State()
     name          = State()
     phone         = State()
@@ -428,9 +479,32 @@ class OfferCreate(StatesGroup):
     volume = State()
     price  = State()
 
+def kb_languages() -> InlineKeyboardMarkup:
+    langs = [
+        ("Русский 🇷🇺", "lang_ru"), ("English 🇬🇧", "lang_en"),
+        ("Español 🇪🇸", "lang_es"), ("Português 🇵🇹", "lang_pt"),
+        ("العربية 🇸🇦", "lang_ar"), ("Türkçe 🇹🇷", "lang_tr"),
+        ("中文 🇨🇳", "lang_zh"), ("Deutsch 🇩🇪", "lang_de"),
+        ("Français 🇫🇷", "lang_fr"), ("Oʻzbekcha 🇺🇿", "lang_uz")
+    ]
+    rows = []
+    for i in range(0, len(langs), 2):
+        row = [InlineKeyboardButton(text=langs[i][0], callback_data=langs[i][1])]
+        if i+1 < len(langs):
+            row.append(InlineKeyboardButton(text=langs[i+1][0], callback_data=langs[i+1][1]))
+        rows.append(row)
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
 # ─── Keyboards ─────────────────────────────────────────────────────────────────
 def kb_main(role: str = "Farmer") -> InlineKeyboardMarkup:
     rows = []
+    if role == "Admin":
+        rows.append([InlineKeyboardButton(text="📊 Рынок предложений", callback_data="market")])
+        rows.append([InlineKeyboardButton(text="🛡️ Антифрод логи", callback_data="admin_antifraud")])
+        rows.append([InlineKeyboardButton(text="👥 Все пользователи", callback_data="admin_users")])
+        rows.append([InlineKeyboardButton(text="⚙️ Статистика системы", callback_data="admin_stats")])
+        return InlineKeyboardMarkup(inline_keyboard=rows)
+
     rows.append([InlineKeyboardButton(text="🌾 Мой профиль", callback_data="my_profile")])
     rows.append([InlineKeyboardButton(text="📊 Рынок предложений", callback_data="market")])
     if role == "Farmer":
@@ -441,8 +515,6 @@ def kb_main(role: str = "Farmer") -> InlineKeyboardMarkup:
     rows.append([InlineKeyboardButton(text="🤝 Мои сделки", callback_data="my_deals")])
     rows.append([InlineKeyboardButton(text="👥 Реферальная программа", callback_data="referral")])
     rows.append([InlineKeyboardButton(text="📈 Trust Index", callback_data="trust_info")])
-    if role == "Admin":
-        rows.append([InlineKeyboardButton(text="🛡️ Антифрод логи", callback_data="admin_antifraud")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 def kb_roles() -> InlineKeyboardMarkup:
@@ -560,14 +632,21 @@ async def cmd_start(msg: Message, state: FSMContext):
 
     if user and user["role"] and user["name"]:
         # Already registered — show main menu
-        role_label = {"Farmer":"Фермер","Buyer":"Покупатель","Carrier":"Перевозчик",
-                      "Warehouse":"Элеватор","Admin":"Администратор"}.get(user["role"], user["role"])
-        await msg.answer(
-            f"👋 С возвращением, *{user['name']}*!\n"
-            f"Роль: *{role_label}* · {trust_bar(user['trust_index'])}\n\n"
-            "Выберите действие:",
-            reply_markup=kb_main(user["role"])
-        )
+        if user["role"] == "Admin":
+            await msg.answer(
+                f"👋 Приветствуем, *Администратор*!\n\n"
+                "Доступна панель управления AgroBalance:",
+                reply_markup=kb_main("Admin")
+            )
+        else:
+            role_label = {"Farmer":"Фермер","Buyer":"Покупатель","Carrier":"Перевозчик",
+                          "Warehouse":"Элеватор"}.get(user["role"], user["role"])
+            await msg.answer(
+                f"👋 С возвращением, *{user['name']}*!\n"
+                f"Роль: *{role_label}* · {trust_bar(user['trust_index'])}\n\n"
+                "Выберите действие:",
+                reply_markup=kb_main(user["role"])
+            )
         await state.clear()
         return
 
@@ -586,12 +665,38 @@ async def cmd_start(msg: Message, state: FSMContext):
         finally:
             conn.close()
 
-    await state.set_state(Reg.role)
+    await state.set_state(Reg.language)
     await msg.answer(
+        "🌍 *AgroBalance Global Platform*\n\n"
+        "Выберите ваш язык интерфейса / Select your interface language:",
+        reply_markup=kb_languages()
+    )
+
+@dp.callback_query(F.data.startswith("lang_"), Reg.language)
+async def reg_language(cb: CallbackQuery, state: FSMContext):
+    lang = cb.data.replace("lang_", "")
+    await state.update_data(language=lang)
+    conn = get_db()
+    conn.execute("UPDATE users SET language=? WHERE telegram_id=?", (lang, str(cb.from_user.id)))
+    conn.commit()
+    conn.close()
+
+    await state.set_state(Reg.role)
+    welcome_text = (
         "🌾 *Добро пожаловать в AgroBalance!*\n\n"
         "Единый агрорынок с честными ценами, AI-рекомендациями и безопасными сделками.\n\n"
-        "*Шаг 1/5:* Кто вы на агрорынке?",
-        reply_markup=kb_roles()
+        "*Шаг 1/5:* Кто вы на агрорынке?"
+    )
+    translated_welcome = await translate_bot_text(welcome_text, lang)
+    
+    roles_kb = kb_roles()
+    for row in roles_kb.inline_keyboard:
+        for btn in row:
+            btn.text = await translate_bot_text(btn.text, lang)
+            
+    await cb.message.edit_text(
+        translated_welcome,
+        reply_markup=roles_kb
     )
 
 # ─── Registration FSM ─────────────────────────────────────────────────────────
@@ -1634,25 +1739,10 @@ async def cmd_admin(msg: Message):
     if msg.from_user.id != ADMIN_ID:
         return
 
-    conn = get_db()
-    user_count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
-    deal_count = conn.execute("SELECT COUNT(*) FROM deals WHERE status='completed'").fetchone()[0]
-    total_volume = conn.execute("SELECT COALESCE(SUM(total_price),0) FROM deals WHERE status='completed'").fetchone()[0]
-    total_fee    = total_volume * 0.01
-    fraud_count  = conn.execute("SELECT COUNT(*) FROM antifraud_logs WHERE created_at > datetime('now','-7 days')").fetchone()[0]
-    conn.close()
-
     await msg.answer(
-        f"🛡️ *AgroBalance Админ-панель*\n\n"
-        f"👥 Пользователей: *{user_count}*\n"
-        f"🤝 Завершённых сделок: *{deal_count}*\n"
-        f"💵 Оборот платформы: *{format_money(total_volume)}*\n"
-        f"📌 Комиссия (1%): *{format_money(total_fee)}*\n"
-        f"⚠️ Антифрод триггеров за 7 дней: *{fraud_count}*",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🛡️ Антифрод логи", callback_data="admin_antifraud")],
-            [InlineKeyboardButton(text="📋 Все пользователи", callback_data="admin_users")]
-        ])
+        "🛡️ *AgroBalance Панель Администратора*\n\n"
+        "Выберите инструмент управления:",
+        reply_markup=kb_main("Admin")
     )
 
 @dp.callback_query(F.data == "admin_antifraud")
@@ -1692,6 +1782,29 @@ async def cb_admin_users(cb: CallbackQuery):
         trust_emoji = "🟢" if u["trust_index"] >= 80 else ("🟡" if u["trust_index"] >= 50 else "🔴")
         text += f"{trust_emoji} *{u['name']}* ({u['role']}) TI:{u['trust_index']:.0f}\ntg:{u['telegram_id']} · {u['region']}\n\n"
 
+    await cb.message.edit_text(text, reply_markup=kb_back_main())
+
+@dp.callback_query(F.data == "admin_stats")
+async def cb_admin_stats(cb: CallbackQuery):
+    if cb.from_user.id != ADMIN_ID:
+        await cb.answer("Доступ запрещён.", show_alert=True)
+        return
+    conn = get_db()
+    user_count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    deal_count = conn.execute("SELECT COUNT(*) FROM deals WHERE status='completed'").fetchone()[0]
+    total_volume = conn.execute("SELECT COALESCE(SUM(total_price),0) FROM deals WHERE status='completed'").fetchone()[0]
+    total_fee    = total_volume * 0.01
+    fraud_count  = conn.execute("SELECT COUNT(*) FROM antifraud_logs WHERE created_at > datetime('now','-7 days')").fetchone()[0]
+    conn.close()
+
+    text = (
+        f"⚙️ *AgroBalance Системная статистика*\n\n"
+        f"👥 Всего пользователей: *{user_count}*\n"
+        f"🤝 Завершённых сделок: *{deal_count}*\n"
+        f"💵 Оборот платформы: *{format_money(total_volume, 'СНГ')}* (₽)\n"
+        f"📌 Комиссия (1%): *{format_money(total_fee, 'СНГ')}* (₽)\n"
+        f"⚠️ Нарушений антифрода за неделю: *{fraud_count}*"
+    )
     await cb.message.edit_text(text, reply_markup=kb_back_main())
 
 from aiohttp import web

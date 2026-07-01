@@ -19,7 +19,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         # Allow requests to API documentation or simple check
-        if request.url.path in ["/docs", "/redoc", "/openapi.json", "/api/v1/bot/webhook"]:
+        if request.url.path in ["/docs", "/redoc", "/openapi.json", "/api/v1/bot/webhook", "/api/v1/auth/translate"]:
             return await call_next(request)
         
         ip = request.client.host if request.client else "unknown"
